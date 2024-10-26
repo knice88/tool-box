@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-
+import { computed, onMounted, ref, watch } from 'vue'
+import { Buffer } from 'buffer'; // 导入 Buffer
+import { ElMessage } from 'element-plus'
 const options = [{
     value: 'GET',
     label: 'GET',
@@ -31,6 +32,10 @@ const contentTypeOptions = [{
     value: 'applcation/json',
     label: 'applcation/json',
 },
+{
+    value: 'multipart/form-data',
+    label: 'multipart/form-data',
+},
 ]
 const reqForm = ref([]) // 请求体参数列表
 const jsonText = ref('') // json请求体参数
@@ -42,6 +47,10 @@ const onAddFormItem = () => {
         key: "",
         value: ""
     })
+}
+// 准备选择文件，将当前行标记为文件类型
+const selectFile = (index) => {
+    reqForm.value[index].isFile = true
 }
 const bodyIsText = computed(() => {
     return contentType.value === 'applcation/json'
@@ -58,7 +67,7 @@ const fmtParams = (params) => {
     });
     return result
 }
-const sendRequest = () => {
+const sendRequest = async () => {
     // 先清空上一次的响应结果
     respResult.value = {}
     // 没有http前缀的url，自动添加
@@ -83,8 +92,20 @@ const sendRequest = () => {
             case 'applcation/json':
                 data = JSON.parse(jsonText.value)
                 break
+            case 'multipart/form-data':
+                await sendFormData().then(formData => {
+                    data = formData
+                })
+                reqForm.value.forEach(row => {
+                    if (!row.isFile) {
+                        // 如果当前参数不是文件类型，将文件添加到FormData中
+                        data[row.key] = row.value
+                    }
+                });
+                break
         }
     }
+    // console.log(reqMethod.value, httpUrl.value, headers, data)
     // 发送请求
     window.electronAPI.sendRequest(
         reqMethod.value.toLowerCase(),
@@ -95,6 +116,46 @@ const sendRequest = () => {
         respResult.value = res
     })
 }
+async function sendFormData() {
+    const data = {
+        isFormData: true, // 标记为 FormData 类型
+        files: [] // 文件对象列表
+    };
+
+    // 创建 Promise 数组来处理异步文件读取
+    const fileReadPromises = [];
+    document.querySelectorAll('input[type="file"]').forEach(fileInput => {
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            const fileReadPromise = new Promise((resolve) => {
+                reader.onloadend = function () {
+                    const byteArray = new Uint8Array(reader.result); // 转换为 Uint8Array
+                    const fileBuffer = Buffer.from(byteArray).toString('base64'); // 转换为 Base64
+                    data["files"].push({
+                        fileName: file.name,
+                        fileType: file.type,
+                        fileBuffer: fileBuffer
+                    }) // 记录文件信息
+                    // console.log("进入file", file.name, byteArray, file);
+                    resolve(); // 文件读取完成，解决 Promise
+                };
+                reader.readAsArrayBuffer(file); // 开始读取文件
+            });
+
+            fileReadPromises.push(fileReadPromise);
+        }
+    });
+
+    // 等待所有文件读取完成
+    await Promise.all(fileReadPromises);
+    return data
+}
+watch(respResult, () => {
+    if (respResult.value.err) {
+        ElMessage.error(respResult.value.err)
+    }
+})
 onMounted(() => {
     reqMethod.value = options[0].value
 })
@@ -155,7 +216,7 @@ const dataText = computed(() => {
                     </el-table-column>
                 </el-table>
                 <el-button class="mt-4" style="width: 100%" @click="onAddItem">
-                    Add Item
+                    增加参数
                 </el-button>
             </div>
         </el-tab-pane>
@@ -173,12 +234,14 @@ const dataText = computed(() => {
                 <el-table :data="reqForm" style="width: 100%" max-height="250">
                     <el-table-column fixed prop="key" label="Key" width="400">
                         <template v-slot="scope">
-                            <el-input v-model="scope.row.key" placeholder="请输入key"></el-input>
+                            <el-input v-model="scope.row.key" placeholder="请输入key"
+                                :disabled="scope.row.isFile"></el-input>
                         </template>
                     </el-table-column>
                     <el-table-column prop="value" label="Value" width="600">
                         <template v-slot="scope">
-                            <el-input v-model="scope.row.value" placeholder="请输入value"></el-input>
+                            <el-input v-model="scope.row.value" placeholder="请输入value"
+                                :type="scope.row.isFile ? 'file' : 'text'"></el-input>
                         </template>
                     </el-table-column>
                     <el-table-column fixed="right" label="操作" min-width="120">
@@ -186,11 +249,15 @@ const dataText = computed(() => {
                             <el-button link type="primary" size="small" @click.prevent="deleteFormRow(scope.$index)">
                                 删除
                             </el-button>
+                            <el-button link type="primary" size="small" @click.prevent="selectFile(scope.$index)"
+                                v-if="contentType === 'multipart/form-data'">
+                                选择文件
+                            </el-button>
                         </template>
                     </el-table-column>
                 </el-table>
                 <el-button class="mt-4" style="width: 100%" @click="onAddFormItem">
-                    Add Item
+                    增加参数
                 </el-button>
             </div>
             <!-- 为json格式时显示json编辑器 -->

@@ -59,6 +59,24 @@ app.on('window-all-closed', () => {
 async function handleSendRequest(event, method, url, headers, data) {
   let result = {}
   let start = performance.now();
+  console.log('send-request', method, url, headers, data)
+  if (data && data.isFormData) {
+    // 处理formData
+    let formData = new FormData()
+    for (let key in data) {
+      if (key === 'files') {
+        // 遍历列表，将文件参数放入formData
+        data['files'].forEach(element => {
+          const blob = base64ToBlob(element.fileBuffer, element.fileType)
+          formData.append('file', blob, element.fileName); // 将 Blob 添加到 FormData 中
+        });
+      } else {
+        // 将普通的参数放入formData
+        formData.append(key, data[key])
+      }
+    }
+    data = formData
+  }
   await axios({
     method: method,
     url: url,
@@ -69,7 +87,6 @@ async function handleSendRequest(event, method, url, headers, data) {
     result.status = res.status
     result.statusText = res.statusText
     result.headers = res.headers
-    console.log(res)
   }).catch(error => {
     if (error.response) {
       // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
@@ -90,4 +107,18 @@ async function handleSendRequest(event, method, url, headers, data) {
   let end = performance.now();
   result.time = end - start
   return result
+}
+
+// 将 Base64 字符串转换为 Blob 对象
+function base64ToBlob(base64, type = 'application/octet-stream') {
+  const byteCharacters = atob(base64); // 解码 Base64 字符串
+  const byteNumbers = new Uint8Array(byteCharacters.length); // 创建字节数组
+
+  // 将字符转换为字节
+  for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+
+  // 创建 Blob 对象
+  return new Blob([byteNumbers], { type: type });
 }
