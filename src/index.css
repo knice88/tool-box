@@ -3,7 +3,6 @@ body {
     Arial, sans-serif;
   margin: 20px;
   padding: 2rem;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
+  width: 90%;
+  max-width: 90%;
 }

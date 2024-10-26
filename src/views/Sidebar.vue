@@ -7,11 +7,16 @@ const list = [
     {
         "route": "/md5",
         "title": "md5加密"
+    },
+    {
+        "route": "/httpClient",
+        "title": "http客户端"
     }
 ]
 </script>
 <template>
     <el-menu class="el-menu-vertical" router>
-        <el-menu-item v-for="item, index in list" :key="item.route" :index="index" :route="item.route"> {{item.title}} </el-menu-item>
+        <el-menu-item v-for="item in list" :key="item.route" :index="item.route" :route="item.route"> {{ item.title }}
+        </el-menu-item>
     </el-menu>
 </template>
