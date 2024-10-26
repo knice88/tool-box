@@ -34,7 +34,6 @@ const clickCopy = (str) => {
 </template>
 <style scoped>
 .source-text {
-    width: 90%;
     height: 200px;
 }
 

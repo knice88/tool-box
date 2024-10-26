@@ -5,10 +5,10 @@ import Sidebar from './Sidebar.vue';
 <template>
     <div class="common-layout">
         <el-container>
-            <el-aside width="200px">
+            <el-aside width="150px">
                 <Sidebar />
             </el-aside>
-            <el-main>
+            <el-main width="calc(100% - 150px)">
                 <RouterView />
             </el-main>
         </el-container>

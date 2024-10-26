@@ -33,6 +33,6 @@ const clickCopy = () => {
         <el-button type="primary" @click="clickFormat('')">压缩</el-button>
         <el-button type="primary" @click="clickCopy">复制</el-button>
         <br /><br />
-        <el-input v-model="jsonStr" type="textarea" :autosize="{ minRows: 20, maxRows: 40 }" style="width: 90%;" placeholder="请输入JSON字符串" />
+        <el-input v-model="jsonStr" type="textarea" :autosize="{ minRows: 20, maxRows: 40 }" placeholder="请输入JSON字符串" />
     </div>
 </template>
