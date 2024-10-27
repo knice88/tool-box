@@ -11,6 +11,10 @@ const list = [
     {
         "route": "/httpClient",
         "title": "http客户端"
+    },
+    {
+        "route": "/time",
+        "title": "时间戳工具"
     }
 ]
 </script>
