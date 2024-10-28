@@ -5,6 +5,7 @@ import Json from '@/views/Json.vue'
 import Md5 from '@/views/Md5.vue'
 import HttpClient from '@/views/HttpClient.vue'
 import Time from '@/views/Time.vue'
+import WsClient from '@/views/WsClient.vue'
 
 const routes = [
     {
@@ -12,6 +13,7 @@ const routes = [
             { path: '/json', component: Json },
             { path: '/md5', component: Md5 },
             { path: '/httpClient', component: HttpClient },
+            { path: '/wsClient', component: WsClient },
             { path: '/time', component: Time },
         ]
     },

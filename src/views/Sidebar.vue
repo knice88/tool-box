@@ -13,6 +13,10 @@ const list = [
         "title": "http客户端"
     },
     {
+        "route": "/wsClient",
+        "title": "ws客户端"
+    },
+    {
         "route": "/time",
         "title": "时间戳工具"
     }

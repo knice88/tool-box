@@ -172,7 +172,7 @@ const dataText = computed(() => {
     <el-select v-model="reqMethod" placeholder="Select" style="width: 100px">
         <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
     </el-select>
-    <el-input v-model="httpUrl" placeholder="http://example.com" style="width: 50%;">httpClient</el-input>
+    <el-input v-model="httpUrl" placeholder="http://example.com" class="h-input"></el-input>
     <el-button type="primary" @click="sendRequest" :disabled="!httpUrl">
         发送<el-icon class="el-icon--right">
             <Promotion />
@@ -180,7 +180,7 @@ const dataText = computed(() => {
     <br />
     <br />
     <!-- Content-Type下拉列表，请求方法为POST时才显示 -->
-    <el-select v-model="contentType" placeholder="Content-Type" style="width: 300px" v-if="reqMethod === 'POST'">
+    <el-select v-model="contentType" placeholder="Content-Type" class="header-select" v-if="reqMethod === 'POST'">
         <el-option v-for="item in contentTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
     </el-select>
     <!-- todo 支持请求头、请求参数、请求体配置 -->
@@ -300,4 +300,15 @@ const dataText = computed(() => {
 
 </template>
 
-<style scoped></style>
+<style scoped>
+.h-input {
+    width: 50%;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.header-select {
+    width: 300px;
+    margin-bottom: 10px;
+}
+</style>
