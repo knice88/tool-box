@@ -19,6 +19,10 @@ const list = [
     {
         "route": "/time",
         "title": "时间戳工具"
+    },
+    {
+        "route": "/qrcode",
+        "title": "二维码工具"
     }
 ]
 </script>
