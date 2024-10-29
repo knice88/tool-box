@@ -3,6 +3,9 @@ import { ref, useTemplateRef, watch, nextTick } from 'vue'
 import { copyToClipboard } from '@/composables/clipboard';
 
 import { ElMessage } from 'element-plus';
+import { DAY_FORMAT_SEC } from '@/composables/constant'
+import { dayjs } from 'element-plus'
+
 const chatList = ref([])
 const wsUrl = ref('')
 const msg = ref('')
@@ -14,36 +17,42 @@ const connect = () => {
     ws = new WebSocket(wsUrl.value);
 
     ws.onopen = function (event) {
-        console.log('WebSocket 连接已建立');
         connected.value = true;
     };
 
     ws.onmessage = function (event) {
-        console.log('收到消息：', event.data);
         // 显示接收到的消息
         chatList.value.push({
             from: 'Server',
             content: event.data,
-            time: new Date().toLocaleString()
+            time: dayjs().format(DAY_FORMAT_SEC)
         })
     };
 
     ws.onclose = function (event) {
-        console.log('WebSocket 连接已关闭', event);
         connected.value = false
     };
 
-    ws.onerror = function (error) {
-        console.error('WebSocket 发生错误：', error);
-        connected.value = false
+    ws.onerror = function (event) {
+        disconnect()
+        chatList.value.push({
+            from: 'System',
+            content: '连接失败',
+            time: dayjs().format(DAY_FORMAT_SEC),
+            tag: 'warning'
+        })
     };
 }
 const sendMsg = () => {
+    if (!msg.value) {
+        ElMessage.warning('请输入消息')
+        return
+    }
     ws.send(msg.value);
     chatList.value.push({
         from: 'Client',
         content: msg.value,
-        time: new Date().toLocaleString()
+        time: dayjs().format(DAY_FORMAT_SEC)
     })
     // 最后将消息置为空
     msg.value = ''
@@ -51,15 +60,12 @@ const sendMsg = () => {
 const disconnect = () => {
     ws.close();
     connected.value = false;
-    console.log('WebSocket 连接已断开');
     ws = null;
 }
 
 const chatAreaRef = useTemplateRef('chat-area')
 watch(() => chatList.value.length, async () => {
-    console.log('chatList length changed')
     await nextTick()
-    console.log('scroll to bottom')
     // 自动滚动到底部
     chatAreaRef.value.scrollTop = chatAreaRef.value.scrollHeight
 })
@@ -69,23 +75,33 @@ watch(connected, (newVal) => {
         chatList.value.push({
             from: 'System',
             content: '连接成功',
-            time: new Date().toLocaleString(),
+            time: dayjs().format(DAY_FORMAT_SEC),
             tag: 'success'
         })
     } else {
         chatList.value.push({
             from: 'System',
             content: '已断开连接',
-            time: new Date().toLocaleString(),
+            time: dayjs().format(DAY_FORMAT_SEC),
             tag: 'info'
         })
     }
 })
+const changeConnection = () => {
+    if (connected.value) {
+        // 断开连接
+        disconnect()
+    } else {
+        // 连接
+        connect()
+    }
+}
 </script>
 
 <template>
     <div class="header">
-        <el-input v-model="wsUrl" placeholder="ws://example.com" class="ws-input"></el-input>
+        <el-input v-model="wsUrl" placeholder="ws://example.com" class="ws-input"
+            @keyup.enter="changeConnection"></el-input>
         <el-button type="primary" @click="connect" :disabled="connected">
             连接<el-icon class="el-icon--right">
                 <Connection />
@@ -111,7 +127,8 @@ watch(connected, (newVal) => {
             </div>
         </div>
     </div>
-    <el-input v-model="msg" placeholder="请输入消息" class="data-input"></el-input>
+    <el-input v-model="msg" placeholder="请输入消息" class="data-input" @keyup.enter="sendMsg"
+        :disabled="!connected"></el-input>
     <el-button type="primary" @click="sendMsg" :disabled="!msg || !connected">
         发送<el-icon class="el-icon--right">
             <Promotion />
@@ -125,7 +142,7 @@ watch(connected, (newVal) => {
 
 .ws-input {
     margin-right: 10px;
-    width: 75%;
+    width: 80%;
 }
 
 .chat-area {
@@ -203,10 +220,10 @@ watch(connected, (newVal) => {
             border-top: 15px solid rgb(196, 192, 192); */
     /* 箭头靠左边 */
     top: 13px;
-            left: -15px;
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-right: 15px solid rgb(196, 192, 192);
+    left: -15px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 15px solid rgb(196, 192, 192);
     /* 箭头靠下边 */
     /* left: 20px;
             top: -15px;
@@ -234,10 +251,10 @@ watch(connected, (newVal) => {
             border-top: 15px solid #fff; */
     /* 箭头靠左边 */
     top: 13px;
-            left: -13px;
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-right: 15px solid #fff;
+    left: -13px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 15px solid #fff;
     /* 箭头靠下边 */
     /* left: 20px;
             top: -13px;
