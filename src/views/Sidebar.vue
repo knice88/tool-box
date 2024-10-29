@@ -9,6 +9,10 @@ const list = [
         "title": "md5加密"
     },
     {
+        "route": "/aes",
+        "title": "aes加密"
+    },
+    {
         "route": "/httpClient",
         "title": "http客户端"
     },
