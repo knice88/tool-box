@@ -3,26 +3,34 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { copyToClipboard } from '@/composables/clipboard'
 import { Switch } from '@element-plus/icons-vue'
+import { DAY_FORMAT_MILL, DAY_FORMAT_SEC } from '@/composables/constant'
+import { dayjs } from 'element-plus'
 
 const unit = ref('ms') // 时间单位
-const currentTime = ref(new Date().getTime()) // 当前时间戳
-const inputDate = ref(new Date().toLocaleString())   // 日期输入框
-const inputTime = ref(new Date().getTime())   // 日期输入框
+const timeFormat = ref(DAY_FORMAT_MILL) // 时间格式
+const currentTime = ref(dayjs().valueOf()) // 当前时间戳
+const inputDate = ref(dayjs().format(timeFormat.value))   // 日期输入框
+const inputTime = ref(dayjs().valueOf())   // 时间戳输入框
+
 const dateToTime = computed(() => {
-    let time = new Date(inputDate.value).getTime() // 毫秒时间戳
-    if (unit.value ==='s') {
-        // 换成秒单位，除以1000
-        time = Math.floor(time / 1000)
+    if (unit.value === 's') {
+        // 秒单位
+        return dayjs(inputDate.value, timeFormat.value).unix()
+    } else {
+        // 毫秒单位
+        return dayjs(inputDate.value, timeFormat.value).valueOf()
     }
-    return time
 }) // 根据inputDate计算的时间戳
+
 const timeToDate = computed(() => {
     let timestamp = inputTime.value
-    if (unit.value ==='s') {
-        // 当前单位是秒，new Date需要传入毫秒时间戳，乘以1000
-        timestamp = timestamp * 1000
+    if (unit.value === 's') {
+        // 秒单位
+        return dayjs.unix(timestamp).format(timeFormat.value)
+    } else {
+        // 毫秒单位
+        return dayjs(timestamp).format(timeFormat.value)
     }
-    return new Date(timestamp).toLocaleString()
 }) // 根据inputTime计算的日期
 
 const switchBtn = ref(false) // 切换按钮
@@ -33,6 +41,7 @@ const onSwitch = () => {
 }
 // 每次修改时间单位时，重新计算当前时间戳
 watch(unit, (newVal) => {
+    timeFormat.value = newVal === 's' ? DAY_FORMAT_SEC : DAY_FORMAT_MILL
     flushCurrentTime()
     if (newVal === 's') {
         // 换成秒单位，除以1000
@@ -43,13 +52,23 @@ watch(unit, (newVal) => {
     }
 })
 const flushCurrentTime = () => {
-    let newVal = new Date().getTime()
+    let newVal = dayjs().valueOf()
     if (unit.value === 's') {
         // 换成秒单位，除以1000
         newVal = Math.floor(newVal / 1000)
     }
     currentTime.value = newVal
 }
+const currentDate = computed(() => {
+    let timestamp = currentTime.value
+    if (unit.value === 's') {
+        // 秒单位
+        return dayjs.unix(timestamp).format(timeFormat.value)
+    } else {
+        // 毫秒单位
+        return dayjs(timestamp).format(timeFormat.value)
+    }
+})
 let timer = null;
 onMounted(() => {
     timer = setInterval(flushCurrentTime, 1000)
@@ -68,8 +87,14 @@ onUnmounted(() => {
         </div>
         <!-- 显示当前时间和时间戳 -->
         <div class="time-box">
-            <el-text class="mx-1">当前时间戳</el-text>
+            <el-text class="mx-1">当前时间</el-text>
             <br>
+            <el-input v-model="currentDate" style="width: 240px" readonly>
+                <template #append>
+                    <el-button :icon="CopyDocument" @click="copyToClipboard(currentDate)" />
+                </template>
+            </el-input>
+            &nbsp;&nbsp;
             <el-input v-model="currentTime" style="width: 180px" readonly>
                 <template #append>
                     <el-button :icon="CopyDocument" @click="copyToClipboard(currentTime)" />
@@ -79,27 +104,23 @@ onUnmounted(() => {
         <div class="time-box">
             <el-text class="mx-1">{{ switchTitle }}</el-text>
             <br>
-            <!-- 日期输入框 -->
-            <el-input v-model="inputDate" style="width: 300px" v-if="!switchBtn">
-                <template #append>
-                    <el-button :icon="CopyDocument" @click="copyToClipboard(inputDate)" />
-                </template>
-            </el-input>
+            <el-date-picker v-model="inputDate" type="datetime" placeholder="选择时间" style="width: 240px"
+                :format="timeFormat" :value-format="timeFormat" v-if="!switchBtn" />
             <!-- 时间戳输入框 -->
-            <el-input v-model.number="inputTime" style="width: 300px" v-else type="number">
+            <el-input v-model.number="inputTime" style="width: 240px" v-else type="number">
                 <template #append>
                     <el-button :icon="CopyDocument" @click="copyToClipboard(inputTime)" />
                 </template>
             </el-input>
             <el-button type="primary" :icon="Switch" circle @click="onSwitch" class="switch-btn" />
             <!-- 计算得到的时间戳 -->
-            <el-input v-model="dateToTime" style="width: 300px" v-if="!switchBtn" readonly>
+            <el-input v-model="dateToTime" style="width: 240px" v-if="!switchBtn" readonly>
                 <template #append>
                     <el-button :icon="CopyDocument" @click="copyToClipboard(dateToTime)" />
                 </template>
             </el-input>
             <!-- 计算得到的日期 -->
-            <el-input v-model="timeToDate" style="width: 300px" v-else readonly>
+            <el-input v-model="timeToDate" style="width: 240px" v-else readonly>
                 <template #append>
                     <el-button :icon="CopyDocument" @click="copyToClipboard(timeToDate)" />
                 </template>
