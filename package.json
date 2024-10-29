@@ -2,7 +2,7 @@
   "name": "tool-box",
   "productName": "tool-box",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Common Tools Collection",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -21,6 +21,7 @@
     "@electron-forge/plugin-fuses": "^7.5.0",
     "@electron-forge/plugin-vite": "^7.5.0",
     "@electron/fuses": "^1.8.0",
+    "@vitejs/plugin-vue": "^5.1.4",
     "electron": "33.0.2",
     "vite": "^5.0.12"
   },
@@ -40,6 +41,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.8.6",
     "qrcode": "^1.5.4",
+    "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   }
 }
