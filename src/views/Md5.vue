@@ -4,31 +4,37 @@ import MD5 from "crypto-js/md5"
 import { copyToClipboard } from '@/composables/clipboard'
 
 const srcText = ref('')
-const md5Text = ref('')
+const md5Lower = ref('')
+const md5Upper = ref('')
 watch(srcText, (newVal) => {
-    md5Text.value = newVal ? MD5(newVal).toString() : ''
+    md5Lower.value = newVal ? MD5(newVal).toString().toLowerCase() : ''
+    md5Upper.value = newVal ? md5Lower.value.toUpperCase() : ''
 })
-
 </script>
 <template>
-    <el-input v-model="srcText" type="textarea" class="source-text" :autosize="{ minRows: 5 }"
+    <div class="md5-result">
+        <span>全小写的MD5值: </span>
+        <el-input v-model="md5Lower" class="md5-output" readonly></el-input>
+        <el-button type="primary" @click="copyToClipboard(md5Lower)"
+            v-if="md5Lower">复制</el-button>
+        <br>
+        <span>全大写的MD5值: </span>
+        <el-input v-model="md5Upper" class="md5-output" readonly></el-input>
+        <el-button type="primary" @click="copyToClipboard(md5Upper)"
+            v-if="md5Upper">复制</el-button>
+    </div>
+    <el-input v-model="srcText" type="textarea" :autosize="{ minRows: 10, maxRows: 30 }"
         placeholder="请输入需要加密的文本"></el-input>
-    <div>
-        <span class="alarm-title">全小写的MD5值: </span>{{ md5Text.toLowerCase() }}
-        <el-button type="primary" @click="copyToClipboard(md5Text.toLowerCase())" v-if="md5Text.length > 0">复制</el-button>
-    </div>
-    <div>
-        <span class="alarm-title">全大写的MD5值: </span>{{ md5Text.toUpperCase() }}
-        <el-button type="primary" @click="copyToClipboard(md5Text.toUpperCase())" v-if="md5Text.length > 0">复制</el-button>
-    </div>
 </template>
 <style scoped>
-.source-text {
-    height: 200px;
-}
-
-.alarm-title {
+.md5-result {
     color: gray;
-    line-height: 36px;
+    line-height: 40px;
+    margin-bottom: 40px;
+}
+.md5-output {
+    width: 360px;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 </style>
