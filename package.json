@@ -14,10 +14,6 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.5.0",
     "@electron-forge/maker-deb": "^7.5.0",
-    "@electron-forge/maker-rpm": "^7.5.0",
-    "@electron-forge/maker-squirrel": "^7.5.0",
-    "@electron-forge/maker-zip": "^7.5.0",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
     "@electron-forge/plugin-fuses": "^7.5.0",
     "@electron-forge/plugin-vite": "^7.5.0",
     "@electron/fuses": "^1.8.0",
@@ -38,11 +34,9 @@
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
     "crypto-js": "^4.2.0",
-    "dayjs": "^1.11.13",
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.8.6",
     "qrcode": "^1.5.4",
-    "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   }
 }
