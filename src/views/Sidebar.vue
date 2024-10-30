@@ -52,7 +52,7 @@ const openFirstMenu = () => {
 </script>
 <template>
     <el-menu class="el-menu-vertical" router>
-        <el-input placeholder="搜索菜单" style="width: 90%;margin-right: 5px;" :suffix-icon="Search" clearable
+        <el-input placeholder="搜索菜单" style="width: 90%;margin-right: 5px;margin-bottom: 10px;" :suffix-icon="Search" clearable
             v-model="searchWords" ref="search" @keyup.enter="openFirstMenu" />
         <el-menu-item v-for="item in displayMenus" :key="item.route" :index="item.route" :route="item.route"> {{
             item.title }}

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
 const path = require('node:path');
 const axios = require('axios');
 
@@ -19,6 +19,18 @@ const createWindow = () => {
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    const menu = new Menu()
+    menu.append(new MenuItem({
+      label: '帮助',
+      submenu: [{
+        role: '开发人员工具',
+        accelerator: process.platform === 'darwin' ? 'Alt+Cmd+I' : 'Ctrl+Shift+I',
+        click: () => {
+          mainWindow.webContents.toggleDevTools()
+        }
+      }]
+    }))
+    Menu.setApplicationMenu(menu)
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
@@ -116,7 +128,7 @@ function base64ToBlob(base64, type = 'application/octet-stream') {
 
   // 将字符转换为字节
   for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
   }
 
   // 创建 Blob 对象
