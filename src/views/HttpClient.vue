@@ -1,7 +1,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { Buffer } from 'buffer'; // 导入 Buffer
-import { ElMessage } from 'element-plus'
+import { ElMessage, dayjs } from 'element-plus'
+import { useHttpHistory } from '../stores/httpHistory';
+import { DAY_FORMAT_SEC } from '@/composables/constant'
+import { da } from 'element-plus/es/locales.mjs';
+
+const httpHistoryStore = useHttpHistory()
 const options = [{
     value: 'GET',
     label: 'GET',
@@ -77,10 +82,8 @@ const sendRequest = async () => {
     let headers = fmtParams(reqHeaders.value)
     let data
     if (reqMethod.value === 'POST') {
-        // Post请求时，没有手动输入Content-Type，则默认值为选中的Content-Type
-        if (!headers['Content-Type']) {
-            headers['Content-Type'] = contentType.value
-        }
+        // Post请求时，以选中的Content-Type为准
+        headers['Content-Type'] = contentType.value
         // 根据Content-Type设置请求体
         switch (contentType.value) {
             case 'applcation/x-www-form-urlencoded':
@@ -114,7 +117,68 @@ const sendRequest = async () => {
         data
     ).then(res => {
         respResult.value = res
+        // 默认打开响应结果的data部分
+        activeNames.value = ['1', '3']
     })
+    // 保存到最近请求列表
+    let paramData
+    if (contentType.value === 'multipart/form-data') {
+        paramData = {}
+        // FormData类型的数据，保存时不用保存其中的文件信息
+        reqForm.value.forEach(row => {
+            if (!row.isFile) {
+                // 当前参数不是文件类型
+                paramData[row.key] = row.value
+            }
+        })
+    } else {
+        paramData = data
+    }
+    httpHistoryStore.addItem(
+        {
+            method: reqMethod.value,
+            url: httpUrl.value,
+            headers: headers,
+            data: paramData,
+            time: dayjs().format(DAY_FORMAT_SEC),
+        }
+    )
+}
+onMounted(() => {
+    if (httpHistoryStore.dataList.length > 0) {
+        const lastItem = httpHistoryStore.dataList[httpHistoryStore.dataList.length - 1]
+        copyHistoryItem(lastItem)
+    } else {
+        // 没有历史记录，默认选择GET请求
+        reqMethod.value = options[0].value
+    }
+})
+
+const copyHistoryItem = (item) => {
+    reqMethod.value = item.method
+    httpUrl.value = item.url
+    contentType.value = item.headers['Content-Type']
+    reqHeaders.value = Object.entries(item.headers).map(([key, value]) => ({ key, value }))
+    if (item.data) {
+        switch (contentType.value) {
+            case 'applcation/x-www-form-urlencoded':
+                // data: "key1=value1&key2=value2"
+                item.data.split('&').forEach(item => {
+                    const [key, value] = item.split('=')
+                    reqForm.value.push({ key, value })
+                })
+                break
+            case 'applcation/json':
+                jsonText.value = JSON.stringify(item.data, null, 2)
+                break
+            case 'multipart/form-data':
+                // data: {"key1": "value1", "key2": "value2"}
+                Object.keys(item.data).forEach(key => {
+                    reqForm.value.push({ key: key, value: item.data[key] })
+                })
+                break
+        }
+    }
 }
 async function sendFormData() {
     const data = {
@@ -156,10 +220,13 @@ watch(respResult, () => {
         ElMessage.error(respResult.value.err)
     }
 })
-onMounted(() => {
-    reqMethod.value = options[0].value
-})
 const activeNames = ref(['1', '3'])
+const recentCollapse = ref(['1'])
+// 用于展示的倒序列表
+const recentHistoryList = computed(() => {
+    // 增加srcIndex字段保存原始索引
+    return httpHistoryStore.dataList.slice().map((item, index) => { item.srcIndex = index; return item }).reverse()
+})
 const dataText = computed(() => {
     if (typeof respResult.value.data === 'object') {
         return JSON.stringify(respResult.value.data, null, 2)
@@ -178,6 +245,47 @@ const dataText = computed(() => {
             <Promotion />
         </el-icon></el-button>
     <br />
+    <el-collapse v-model="recentCollapse">
+        <el-collapse-item title="最近请求" name="1" v-if="httpHistoryStore.dataList.length > 0">
+            <div style="max-height: 250px; overflow: auto;">
+                <el-row :gutter="20" class="recent-title">
+                    <el-col :span="2">
+                        请求方式
+                    </el-col>
+                    <el-col :span="15">
+                        url
+                    </el-col>
+                    <el-col :span="5">
+                        时间
+                    </el-col>
+                    <el-col :span="2">
+                        操作
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20" class="recent-item" v-for="item, index in recentHistoryList" :key="index">
+                    <el-col :span="2" style="color: green">
+                        {{ item.method }}
+                    </el-col>
+                    <el-col :span="15">
+                        {{ item.url }}
+                    </el-col>
+                    <el-col :span="5">
+                        {{ item.time }}
+                    </el-col>
+                    <el-col :span="2">
+                        <el-icon @click="copyHistoryItem(item)" title="复制">
+                            <Upload />
+                        </el-icon>
+                        &nbsp;
+                        &nbsp;
+                        <el-icon @click="httpHistoryStore.delItem(item.srcIndex)">
+                            <Delete />
+                        </el-icon>
+                    </el-col>
+                </el-row>
+            </div>
+        </el-collapse-item>
+    </el-collapse>
     <br />
     <!-- Content-Type下拉列表，请求方法为POST时才显示 -->
     <el-select v-model="contentType" placeholder="Content-Type" class="header-select" v-if="reqMethod === 'POST'">
@@ -269,35 +377,31 @@ const dataText = computed(() => {
 
     </el-tabs>
     <br />
-    <div class="demo-collapse">
-        <el-collapse v-model="activeNames">
-            <el-collapse-item title="响应结果" name="1" v-if="respResult.time">
-                <el-descriptions class="margin-top" title="" :column="1">
-                    <el-descriptions-item label="状态码">
-                        {{ respResult.status }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="状态信息">
-                        {{ respResult.statusText }}
-                    </el-descriptions-item>
-                    <el-descriptions-item label="响应时间(ms)">
-                        {{ respResult.time }}
-                    </el-descriptions-item>
-                </el-descriptions>
-            </el-collapse-item>
-            <el-collapse-item title="响应头" name="2" v-if="respResult.headers">
-                <el-descriptions class="margin-top" title="" :column="1">
-                    <el-descriptions-item v-for="value, key in respResult.headers" :key="key" :label="key">
-                        {{ value }}
-                    </el-descriptions-item>
-                </el-descriptions>
-            </el-collapse-item>
-            <el-collapse-item title="响应数据" name="3" v-if="dataText">
-                <el-input type="textarea" readonly v-model="dataText"
-                    :autosize="{ minRows: 10, maxRows: 20 }"></el-input>
-            </el-collapse-item>
-        </el-collapse>
-    </div>
-
+    <el-collapse v-model="activeNames">
+        <el-collapse-item title="响应结果" name="1" v-if="respResult.time">
+            <el-descriptions class="margin-top" title="" :column="1">
+                <el-descriptions-item label="状态码">
+                    {{ respResult.status }}
+                </el-descriptions-item>
+                <el-descriptions-item label="状态信息">
+                    {{ respResult.statusText }}
+                </el-descriptions-item>
+                <el-descriptions-item label="响应时间(ms)">
+                    {{ respResult.time }}
+                </el-descriptions-item>
+            </el-descriptions>
+        </el-collapse-item>
+        <el-collapse-item title="响应头" name="2" v-if="respResult.headers">
+            <el-descriptions class="margin-top" title="" :column="1">
+                <el-descriptions-item v-for="value, key in respResult.headers" :key="key" :label="key">
+                    {{ value }}
+                </el-descriptions-item>
+            </el-descriptions>
+        </el-collapse-item>
+        <el-collapse-item title="响应数据" name="3" v-if="dataText">
+            <el-input type="textarea" readonly v-model="dataText" :autosize="{ minRows: 10, maxRows: 20 }"></el-input>
+        </el-collapse-item>
+    </el-collapse>
 </template>
 
 <style scoped>
@@ -310,5 +414,23 @@ const dataText = computed(() => {
 .header-select {
     width: 300px;
     margin-bottom: 10px;
+}
+
+.recent-title {
+    width: 96%;
+    font-size: 15px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-top: 1px solid #dcdfe6;
+    color: #606266;
+}
+
+.recent-item {
+    width: 96%;
+    font-size: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-top: 1px solid #dcdfe6;
+    color: #606266;
 }
 </style>
