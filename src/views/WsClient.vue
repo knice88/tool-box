@@ -1,11 +1,11 @@
 <script setup>
-import { ref, useTemplateRef, watch, nextTick } from 'vue'
+import { ref, useTemplateRef, watch, nextTick, onMounted, computed } from 'vue'
 import { copyToClipboard } from '@/composables/clipboard';
-
-import { ElMessage } from 'element-plus';
+import { useWsHistory } from '@/stores/wsHistory';
+import { ElMessage, dayjs } from 'element-plus';
 import { DAY_FORMAT_SEC } from '@/composables/constant'
-import { dayjs } from 'element-plus'
 
+const wsHistoryStore = useWsHistory()
 const chatList = ref([])
 const wsUrl = ref('')
 const msg = ref('')
@@ -13,11 +13,26 @@ const msg = ref('')
 const connected = ref(false)
 // ws客户端实例
 let ws = null
+onMounted(() => {
+    // 从最近请求列表中获取上次的连接地址
+    if (wsHistoryStore.dataList.length > 0) {
+        wsUrl.value = wsHistoryStore.dataList[wsHistoryStore.dataList.length - 1].url
+        // connect()
+    }
+})
+const recentCollapse = ref(['1'])
+// 用于展示的倒序列表
+const recentHistoryList = computed(() => {
+    // 增加srcIndex字段保存原始索引
+    return wsHistoryStore.dataList.slice().map((item, index) => { item.srcIndex = index; return item }).reverse()
+})
 const connect = () => {
     ws = new WebSocket(wsUrl.value);
 
     ws.onopen = function (event) {
         connected.value = true;
+        // 保存到最近请求列表
+        wsHistoryStore.addItem({ url: wsUrl.value, time: dayjs().format(DAY_FORMAT_SEC) })
     };
 
     ws.onmessage = function (event) {
@@ -96,6 +111,14 @@ const changeConnection = () => {
         connect()
     }
 }
+const copyConnection = (url) => {
+    if (connected.value) {
+        // 先断开原连接
+        disconnect()
+    }
+    wsUrl.value = url
+    connect()
+}
 </script>
 
 <template>
@@ -111,6 +134,30 @@ const changeConnection = () => {
                 <Close />
             </el-icon></el-button>
     </div>
+    <el-collapse v-model="recentCollapse">
+        <el-collapse-item title="最近请求" name="1" v-if="wsHistoryStore.dataList.length > 0">
+            <div style="max-height: 250px; overflow: auto;">
+                <el-row :gutter="20" class="recent-item" v-for="item, index in recentHistoryList" :key="index">
+                    <el-col :span="17">
+                        {{ item.url }}
+                    </el-col>
+                    <el-col :span="5">
+                        {{ item.time }}
+                    </el-col>
+                    <el-col :span="2">
+                        <el-icon @click="copyConnection(item.url)" title="复制">
+                            <Upload />
+                        </el-icon>
+                        &nbsp;
+                        &nbsp;
+                        <el-icon @click="wsHistoryStore.delItem(item.srcIndex)">
+                            <Delete />
+                        </el-icon>
+                    </el-col>
+                </el-row>
+            </div>
+        </el-collapse-item>
+    </el-collapse>
     <div class="chat-area" ref="chat-area">
         <div v-for="(item, index) in chatList" :key="index" style="overflow: hidden;">
             <div v-if="item.from === 'System'" class="row-system">
@@ -136,6 +183,15 @@ const changeConnection = () => {
 </template>
 
 <style scoped>
+.recent-item {
+    width: 96%;
+    font-size: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-top: 1px solid #dcdfe6;
+    color: #606266;
+}
+
 .header {
     margin-bottom: 10px;
 }
