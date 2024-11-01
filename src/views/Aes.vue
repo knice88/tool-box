@@ -1,7 +1,7 @@
 <script setup>
 import CryptoJS from 'crypto-js';
 import { ElMessage } from 'element-plus';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 const isBase64 = ref('Hex');
 const inputText = ref('')
 const outputText = ref('')
@@ -36,7 +36,7 @@ const encrypt = () => {
         return
     }
     if (checkResult !== inputText.value) {
-        ElMessage.error('加密失败了' + inputText.value + ":" + checkResult)
+        ElMessage.error('加密不可逆')
         return
     }
     outputText.value = cryptoData
@@ -55,6 +55,21 @@ const decrypt = () => {
     outputText.value = CryptoJS.enc.Utf8.stringify(decrypt);
 }
 
+const calcKeyBits = computed(() => {
+    // 不判断的话，key默认是undefined，会计算出字节数为72
+    if (formInline.value.keyType && formInline.value.key) {
+        return CryptoJS.enc[formInline.value.keyType].parse(formInline.value.key).sigBytes * 8
+    }
+    return 0
+})
+
+const calcIvBits = computed(() => {
+    // 不判断的话，iv默认是undefined，会计算出字节数为72
+    if (formInline.value.ivType && formInline.value.iv) {
+        return CryptoJS.enc[formInline.value.ivType].parse(formInline.value.iv).sigBytes * 8
+    }
+    return 0
+})
 </script>
 <template>
     <el-input type="textarea" v-model="inputText" :autosize="{ minRows: 10, maxRows: 20 }"
@@ -84,6 +99,11 @@ const decrypt = () => {
                         <el-option label="Hex" value="Hex" />
                     </el-select>
                 </template>
+                <template #suffix>
+                    <div style="border-left: 1px solid var(--el-border-color); text-align: center;">
+                        {{ calcKeyBits }}bits
+                    </div>
+                </template>
             </el-input>
         </el-form-item>
         <el-form-item label="偏移量">
@@ -94,6 +114,10 @@ const decrypt = () => {
                         <el-option label="Base64" value="Base64" />
                         <el-option label="Hex" value="Hex" />
                     </el-select>
+                </template>
+                <template #suffix>
+                    <div style="border-left: 1px solid var(--el-border-color); text-align: center;">
+                        {{ calcIvBits }}bits</div>
                 </template>
             </el-input>
         </el-form-item>

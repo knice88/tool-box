@@ -35,7 +35,6 @@ const list = [
 ]
 const searchWords = ref('')
 const displayMenus = computed(() => {
-    console.log(searchWords.value)
     return list.filter(item => item.title.toLowerCase().includes(searchWords.value.toLowerCase()))
 })
 const searchEle = useTemplateRef('search')
