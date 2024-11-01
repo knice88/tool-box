@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useHttpHistory = defineStore('httpHistory', () => {
+export const useWsHistory = defineStore('wsHistory', () => {
     // 接口调用的历史记录
     const dataList = ref([])
     // 添加一个新项
