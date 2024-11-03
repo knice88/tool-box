@@ -3,6 +3,8 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const busboy = require('busboy');
+const { BrowserWindow } = require('electron')
+
 let port
 let server
 let keyToPath = {} // 下载链接key与文件路径的映射
@@ -42,10 +44,15 @@ export default {
                         </head>
                         <body>
                             <form action="/rec" method="post" enctype="multipart/form-data">
-                                <label for="file">选择文件：</label>
+                                <label for="file">选择文件</label>
                                 <input type="file" name="file">
                                 <br>
-                                <input type="submit" value="上传">
+                                <br>
+                                <br>
+                                <label for="textMsg">输入文本</label>
+                                <input type="text" name="textMsg">
+                                <br>
+                                <input type="submit" value="发送">
                             </form>
                         </body>
                     </html>
@@ -57,9 +64,23 @@ export default {
                 // 处理Content-Type为multipart/form-data的请求
                 const bb = busboy({ headers: req.headers });
                 let saveTo = '';
+                let successTip = ''
                 bb.on('file', (name, file, info) => {
-                    saveTo = `${downloadDir}/${info.filename}`;
-                    file.pipe(fs.createWriteStream(saveTo));
+                    // 只传文本的时候，还是会走到这里，但是info.filename为undefined
+                    // 所以需要判断一下info.filename是否存在
+                    if (info.filename) {
+                        saveTo = `${downloadDir}/${info.filename}`;
+                        file.pipe(fs.createWriteStream(saveTo));
+                        successTip = `上传成功，文件保存到：${saveTo}`
+                    }
+                });
+                bb.on('field', (name, val, info) => {
+                    // 处理文本字段
+                    if (val) {
+                        BrowserWindow.getFocusedWindow().webContents.send('form-msg-updated', val)
+                        successTip = '消息发送成功'
+                        bb.emit('close');
+                    }
                 });
                 bb.on('close', () => {
                     res.writeHead(200, { 'Connection': 'close' });
@@ -67,7 +88,7 @@ export default {
                         <head>
                             <meta charset="UTF-8" />
                         </head>
-                        <body>上传成功，文件保存到：${saveTo}</body>
+                        <body>${successTip}</body>
                         </html>`);
                 });
                 req.pipe(bb);

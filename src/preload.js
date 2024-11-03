@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     stopHttpServer: () => ipcRenderer.invoke('stop-http-server'),
     createDownLink: (filePath) => ipcRenderer.invoke('create-downlink', filePath),
     getServerInfo: () => ipcRenderer.invoke('get-server-info'),
+    onFormMsgUpdated: (callback) => ipcRenderer.on('form-msg-updated', (_event, value) => callback(value)),
 })

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, useTemplateRef, computed, watch } from 'vu
 import QRCode from 'qrcode'
 import { ElMessage, dayjs } from 'element-plus'
 import { DAY_FORMAT_SEC } from '@/composables/constant'
+import { copyToClipboard } from '@/composables/clipboard'
 
 const serverInfo = ref({}) // 服务器信息
 onMounted(async () => {
@@ -20,6 +21,11 @@ const downloadFiles = ref([])
 // 展示的时候按时间倒序排列
 const reserveDownloadFiles = computed(() => {
     return downloadFiles.value.slice().reverse()
+})
+const fileRef = useTemplateRef('file-input') // 获取file输入框的引用
+const formMsg = ref('')
+window.electronAPI.onFormMsgUpdated((msg) => {
+    formMsg.value = msg
 })
 const fileChange = () => {
     const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.input.files[0])
@@ -39,7 +45,6 @@ const fileChange = () => {
     })
 }
 const fileModel = ref('') // 在输入框为file类型时，v-model绑定的值为假的文件路径，没什么用
-const fileRef = useTemplateRef('file-input') // 获取file输入框的引用
 const recInfo = ref({
     url: '', // 链接地址
     imgUrl: '' // 二维码图片地址
@@ -81,8 +86,15 @@ const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
     </div>
     <div v-if="transferMode === '1'">
         <el-card style="max-width: 320px; width: 100%;">
-            <template #header>扫描二维码上传文件，文件将保存到{{ serverInfo.downloadDir }}</template>
+            <template #header>扫描二维码上传文件/传输文本</template>
             <img :src="recInfo.imgUrl" style="width: 100%" />
+            <template #footer>
+                <div style="color: gray; font-size: 15px;">文件将保存到{{ serverInfo.downloadDir }}
+                </div>
+            </template>
         </el-card>
+        <br>
+        <el-button type="primary" @click="copyToClipboard(formMsg)" :disabled="!formMsg">复制消息</el-button>
+        <el-input type="textarea" readonly v-model="formMsg"></el-input>
     </div>
 </template>
