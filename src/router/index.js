@@ -8,6 +8,7 @@ import Time from '@/views/Time.vue'
 import WsClient from '@/views/WsClient.vue'
 import QRCode from '@/views/QRCode.vue'
 import Aes from '@/views/Aes.vue'
+import FileTransfer from '@/views/FileTransfer.vue'
 
 const routes = [
     {
@@ -19,6 +20,7 @@ const routes = [
             { path: '/wsClient', component: WsClient },
             { path: '/time', component: Time },
             { path: '/qrcode', component: QRCode },
+            { path: '/fileTransfer', component: FileTransfer },
         ]
     },
 ]

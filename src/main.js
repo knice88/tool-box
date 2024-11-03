@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
 const path = require('node:path');
 const axios = require('axios');
+import httpServer from './composables/httpServer';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -44,7 +45,12 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  ipcMain.handle('send-request', handleSendRequest)
+  ipcMain.handle('send-request', handleSendRequest) // http客户端发送请求
+  ipcMain.handle('start-http-server', httpServer.startServer) // 开启http服务
+  ipcMain.handle('stop-http-server', httpServer.stopServer) // 关闭http服务
+  ipcMain.handle('create-downlink', httpServer.createDownLink) // 创建下载链接
+  ipcMain.handle('get-server-info', httpServer.getServerInfo) // 获取服务器信息
+  // 关闭http服务
   createWindow();
 
   // On OS X it's common to re-create a window in the app when the

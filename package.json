@@ -33,6 +33,7 @@
     "@vueuse/core": "^11.1.0",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
+    "busboy": "^1.6.0",
     "crypto-js": "^4.2.0",
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.8.6",

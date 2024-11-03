@@ -31,6 +31,10 @@ const list = [
     {
         "route": "/qrcode",
         "title": "二维码工具"
+    },
+    {
+        "route": "/fileTransfer",
+        "title": "传输文件"
     }
 ]
 const searchWords = ref('')
