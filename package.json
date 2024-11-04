@@ -30,6 +30,7 @@
   "packageManager": "yarn@4.5.1",
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@vueuse/core": "^11.1.0",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
@@ -37,6 +38,7 @@
     "crypto-js": "^4.2.0",
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.8.6",
+    "json-editor-vue3": "^1.1.1",
     "pinia": "^2.2.5",
     "pinia-plugin-persistedstate": "^4.1.2",
     "qrcode": "^1.5.4",
