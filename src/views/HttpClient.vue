@@ -1,9 +1,9 @@
 <script setup>
-import { computed, onMounted, ref, watch, nextTick } from 'vue'
-import { getRandStr } from '@/composables/common'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, dayjs } from 'element-plus'
-import { useHttpHistory } from '../stores/httpHistory';
+import { useHttpHistory } from '../stores/httpHistory'
 import { DAY_FORMAT_SEC } from '@/composables/constant'
+import SelectFileBtn from './components/SelectFileBtn.vue'
 
 const httpHistoryStore = useHttpHistory()
 const options = [{
@@ -48,22 +48,15 @@ const deleteFormRow = (index) => {
 }
 const onAddFormItem = () => {
     reqForm.value.push({
-        fileId: `form-file-${getRandStr(4)}`,
         key: "",
         value: ""
     })
 }
-// 准备选择文件，将当前行标记为文件类型
-const selectFile = async (index) => {
+const onFileChange = (event, index) => {
     if (!reqForm.value[index].key) {
         reqForm.value[index].key = 'file' // 文件类型参数名默认为file
     }
     reqForm.value[index].isFile = true
-    await nextTick()
-    // 打开文件选择框
-    document.getElementById(reqForm.value[index].fileId).click()
-}
-const onFileChange = (event, index) => {
     const file = event.target.files[0]
     if (file) {
         reqForm.value[index].value = window.electronAPI.webUtils.getPathForFile(file)
@@ -184,15 +177,14 @@ const copyHistoryItem = (item) => {
                 // data: {key: value, files: {isFile: true, paths: [path1, path2]}}
                 Object.keys(item.data).forEach(key => {
                     const value = item.data[key]
-                    const fileId = `form-file-${getRandStr(4)}` // 随机生成一个id
                     if (typeof value === 'object' && value.isFile) {
                         value.paths.forEach(path => {
                             // 文件类型参数
-                            reqForm.value.push({ key: key, value: path, isFile: true, fileId: fileId })
+                            reqForm.value.push({ key: key, value: path, isFile: true })
                         })
                     } else {
                         // 普通参数
-                        reqForm.value.push({ key: key, value: item.data[key], fileId: fileId })
+                        reqForm.value.push({ key: key, value: item.data[key] })
                     }
                 })
                 break
@@ -333,9 +325,6 @@ const dataText = computed(() => {
                     <el-table-column prop="value" label="Value" width="600">
                         <template v-slot="scope">
                             <el-input v-model="scope.row.value" placeholder="请输入value" :disabled="scope.row.isFile" />
-                            <!-- 隐藏的文件输入框 -->
-                            <input type="file" style="display: none" :id="scope.row.fileId"
-                                :onchange="(event) => onFileChange(event, scope.$index)" />
                         </template>
                     </el-table-column>
                     <el-table-column fixed="right" label="操作" min-width="120">
@@ -343,10 +332,8 @@ const dataText = computed(() => {
                             <el-button link type="primary" size="small" @click.prevent="deleteFormRow(scope.$index)">
                                 删除
                             </el-button>
-                            <el-button link type="primary" size="small" @click.prevent="selectFile(scope.$index)"
-                                v-if="contentType === 'multipart/form-data'">
-                                选择文件
-                            </el-button>
+                            <SelectFileBtn @on-file-change="onFileChange" v-if="contentType === 'multipart/form-data'"
+                                :index="scope.$index" />
                         </template>
                     </el-table-column>
                 </el-table>
