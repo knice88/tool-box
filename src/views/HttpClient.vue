@@ -1,10 +1,9 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { Buffer } from 'buffer'; // 导入 Buffer
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { getRandStr } from '@/composables/common'
 import { ElMessage, dayjs } from 'element-plus'
 import { useHttpHistory } from '../stores/httpHistory';
 import { DAY_FORMAT_SEC } from '@/composables/constant'
-import { da } from 'element-plus/es/locales.mjs';
 
 const httpHistoryStore = useHttpHistory()
 const options = [{
@@ -49,13 +48,28 @@ const deleteFormRow = (index) => {
 }
 const onAddFormItem = () => {
     reqForm.value.push({
+        fileId: `form-file-${getRandStr(4)}`,
         key: "",
         value: ""
     })
 }
 // 准备选择文件，将当前行标记为文件类型
-const selectFile = (index) => {
+const selectFile = async (index) => {
+    if (!reqForm.value[index].key) {
+        reqForm.value[index].key = 'file' // 文件类型参数名默认为file
+    }
     reqForm.value[index].isFile = true
+    await nextTick()
+    // 打开文件选择框
+    document.getElementById(reqForm.value[index].fileId).click()
+}
+const onFileChange = (event, index) => {
+    const file = event.target.files[0]
+    if (file) {
+        reqForm.value[index].value = window.electronAPI.webUtils.getPathForFile(file)
+    } else {
+        reqForm.value[index].value = ''
+    }
 }
 const bodyIsText = computed(() => {
     return contentType.value === 'applcation/json'
@@ -96,13 +110,21 @@ const sendRequest = async () => {
                 data = JSON.parse(jsonText.value)
                 break
             case 'multipart/form-data':
-                await sendFormData().then(formData => {
-                    data = formData
-                })
+                data = {}
                 reqForm.value.forEach(row => {
                     if (!row.isFile) {
-                        // 如果当前参数不是文件类型，将文件添加到FormData中
+                        // 如果当前参数不是文件类型，将文件添加到data中
                         data[row.key] = row.value
+                    } else {
+                        // 如果当前参数是文件类型，将文件的绝对路径添加到data中
+                        if (!data[row.key]) {
+                            // 初始化
+                            data[row.key] = {
+                                isFile: true,
+                                paths: []
+                            }
+                        }
+                        data[row.key].paths.push(row.value)
                     }
                 });
                 break
@@ -121,25 +143,12 @@ const sendRequest = async () => {
         activeNames.value = ['1', '3']
     })
     // 保存到最近请求列表
-    let paramData
-    if (contentType.value === 'multipart/form-data') {
-        paramData = {}
-        // FormData类型的数据，保存时不用保存其中的文件信息
-        reqForm.value.forEach(row => {
-            if (!row.isFile) {
-                // 当前参数不是文件类型
-                paramData[row.key] = row.value
-            }
-        })
-    } else {
-        paramData = data
-    }
     httpHistoryStore.addItem(
         {
             method: reqMethod.value,
             url: httpUrl.value,
             headers: headers,
-            data: paramData,
+            data: data,
             time: dayjs().format(DAY_FORMAT_SEC),
         }
     )
@@ -172,49 +181,25 @@ const copyHistoryItem = (item) => {
                 jsonText.value = JSON.stringify(item.data, null, 2)
                 break
             case 'multipart/form-data':
-                // data: {"key1": "value1", "key2": "value2"}
+                // data: {key: value, files: {isFile: true, paths: [path1, path2]}}
                 Object.keys(item.data).forEach(key => {
-                    reqForm.value.push({ key: key, value: item.data[key] })
+                    const value = item.data[key]
+                    const fileId = `form-file-${getRandStr(4)}` // 随机生成一个id
+                    if (typeof value === 'object' && value.isFile) {
+                        value.paths.forEach(path => {
+                            // 文件类型参数
+                            reqForm.value.push({ key: key, value: path, isFile: true, fileId: fileId })
+                        })
+                    } else {
+                        // 普通参数
+                        reqForm.value.push({ key: key, value: item.data[key], fileId: fileId })
+                    }
                 })
                 break
         }
     }
 }
-async function sendFormData() {
-    const data = {
-        isFormData: true, // 标记为 FormData 类型
-        files: [] // 文件对象列表
-    };
 
-    // 创建 Promise 数组来处理异步文件读取
-    const fileReadPromises = [];
-    document.querySelectorAll('input[type="file"]').forEach(fileInput => {
-        const file = fileInput.files[0];
-        if (file) {
-            const reader = new FileReader();
-            const fileReadPromise = new Promise((resolve) => {
-                reader.onloadend = function () {
-                    const byteArray = new Uint8Array(reader.result); // 转换为 Uint8Array
-                    const fileBuffer = Buffer.from(byteArray).toString('base64'); // 转换为 Base64
-                    data["files"].push({
-                        fileName: file.name,
-                        fileType: file.type,
-                        fileBuffer: fileBuffer
-                    }) // 记录文件信息
-                    // console.log("进入file", file.name, byteArray, file);
-                    resolve(); // 文件读取完成，解决 Promise
-                };
-                reader.readAsArrayBuffer(file); // 开始读取文件
-            });
-
-            fileReadPromises.push(fileReadPromise);
-        }
-    });
-
-    // 等待所有文件读取完成
-    await Promise.all(fileReadPromises);
-    return data
-}
 watch(respResult, () => {
     if (respResult.value.err) {
         ElMessage.error(respResult.value.err)
@@ -342,14 +327,15 @@ const dataText = computed(() => {
                 <el-table :data="reqForm" style="width: 100%" max-height="250">
                     <el-table-column fixed prop="key" label="Key" width="400">
                         <template v-slot="scope">
-                            <el-input v-model="scope.row.key" placeholder="请输入key"
-                                :disabled="scope.row.isFile"></el-input>
+                            <el-input v-model="scope.row.key" placeholder="请输入key" />
                         </template>
                     </el-table-column>
                     <el-table-column prop="value" label="Value" width="600">
                         <template v-slot="scope">
-                            <el-input v-model="scope.row.value" placeholder="请输入value"
-                                :type="scope.row.isFile ? 'file' : 'text'"></el-input>
+                            <el-input v-model="scope.row.value" placeholder="请输入value" :disabled="scope.row.isFile" />
+                            <!-- 隐藏的文件输入框 -->
+                            <input type="file" style="display: none" :id="scope.row.fileId"
+                                :onchange="(event) => onFileChange(event, scope.$index)" />
                         </template>
                     </el-table-column>
                     <el-table-column fixed="right" label="操作" min-width="120">
