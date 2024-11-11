@@ -2,21 +2,32 @@
 import { ref, onMounted, onUnmounted, useTemplateRef, computed, watch } from 'vue';
 import QRCode from 'qrcode'
 import { ElMessage, dayjs } from 'element-plus'
-import { DAY_FORMAT_SEC } from '@/composables/constant'
+import { DAY_FORMAT_SEC, DOWNLOAD_DIR_KEY } from '@/composables/constant'
 import { copyToClipboard } from '@/composables/clipboard'
 
 const serverInfo = ref({}) // 服务器信息
 onMounted(async () => {
     await window.electronAPI.startHttpServer()
+    getServerInfo()
+})
+const getServerInfo = () => {
     window.electronAPI.getServerInfo().then(info => {
         serverInfo.value.ip = info.ip
         serverInfo.value.port = info.port
         serverInfo.value.downloadDir = info.downloadDir
     })
-})
+}
 onUnmounted(() => {
     window.electronAPI.stopHttpServer();
 })
+
+const selectDownloadDir = () => {
+    window.electronAPI.selectFolder(serverInfo.value.downloadDir).then(dirs => {
+        window.electronAPI.setSetting(DOWNLOAD_DIR_KEY, dirs[0])
+        // 重新设置下载目录
+        getServerInfo()
+    })
+}
 const downloadFiles = ref([])
 // 展示的时候按时间倒序排列
 const reserveDownloadFiles = computed(() => {
@@ -89,7 +100,10 @@ const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
             <template #header>扫描二维码上传文件/传输文本</template>
             <img :src="recInfo.imgUrl" style="width: 100%" />
             <template #footer>
-                <div style="color: gray; font-size: 15px;">文件将保存到{{ serverInfo.downloadDir }}
+                <div style="color: gray; font-size: 15px;">文件将保存到
+                    <el-button link type="primary" @click.prevent="selectDownloadDir">
+                        {{ serverInfo.downloadDir }}
+                    </el-button>
                 </div>
             </template>
         </el-card>

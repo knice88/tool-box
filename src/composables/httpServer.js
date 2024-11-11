@@ -1,14 +1,27 @@
+import path from 'path';
 import { getRandStr, getRandNum } from './common'
+import { DOWNLOAD_DIR_KEY } from './constant'
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const busboy = require('busboy');
 const { BrowserWindow } = require('electron')
+import Store from 'electron-store';
+const store = new Store();
 
 let port
 let server
 let keyToPath = {} // 下载链接key与文件路径的映射
-const downloadDir = `${os.homedir()}/Downloads`
+
+const getDownloadDir = () => {
+    // 读取配置文件
+    const downloadDir = store.get(DOWNLOAD_DIR_KEY)
+    if (downloadDir) {
+        return downloadDir
+    }
+    // 默认下载目录为 ~/Downloads
+    return `${os.homedir()}/Downloads`
+}
 
 export default {
     startServer: (event) => {
@@ -69,8 +82,8 @@ export default {
                     // 只传文本的时候，还是会走到这里，但是info.filename为undefined
                     // 所以需要判断一下info.filename是否存在
                     if (info.filename) {
-                        saveTo = `${downloadDir}/${info.filename}`;
-                        file.pipe(fs.createWriteStream(saveTo));
+                        saveTo = path.join(getDownloadDir(), info.filename)
+                        file.pipe(fs.createWriteStream(saveTo))
                         successTip = `上传成功，文件保存到：${saveTo}`
                     }
                 });
@@ -133,7 +146,7 @@ export default {
         return {
             port: port,
             ip: ip,
-            downloadDir: downloadDir
+            downloadDir: getDownloadDir()
         }
     }
 }

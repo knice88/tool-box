@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     createDownLink: (filePath) => ipcRenderer.invoke('create-downlink', filePath),
     getServerInfo: () => ipcRenderer.invoke('get-server-info'),
     onFormMsgUpdated: (callback) => ipcRenderer.on('form-msg-updated', (_event, value) => callback(value)),
+    selectFolder: (defaultPath) => ipcRenderer.invoke('select-folder', defaultPath),
+    getSetting: (key) => ipcRenderer.invoke('get-setting', key),
+    setSetting: (key, value) => ipcRenderer.invoke('set-setting', key, value),
 })
