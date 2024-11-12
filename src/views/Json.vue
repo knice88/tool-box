@@ -11,7 +11,7 @@ const jsonStr = ref('')
     </div>
 </template>
 
-<style scoped>
+<style>
 .json-viewer-container {
     width: 100%;
     height: 800px;
@@ -21,5 +21,21 @@ const jsonStr = ref('')
     overflow: auto;
     width: 100%;
     height: 100%;
+}
+
+.jsoneditor-menu {
+    background-color: var(--el-color-primary-light-3);
+    border-bottom-color: var(--el-color-primary-light-3);
+}
+
+.jsoneditor {
+    /* border-color: var(--el-color-primary-light-3); */
+    border-color: #ebebeb;
+
+}
+
+/* 隐藏poweredBy */
+.jsoneditor-poweredBy{
+    display: none;
 }
 </style>
