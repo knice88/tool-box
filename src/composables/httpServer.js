@@ -20,7 +20,7 @@ const getDownloadDir = () => {
         return downloadDir
     }
     // 默认下载目录为 ~/Downloads
-    return `${os.homedir()}/Downloads`
+    return path.join(os.homedir(), 'Downloads')
 }
 
 export default {
@@ -41,8 +41,8 @@ export default {
                 }
                 const name = filePath.substring(filePath.lastIndexOf('/') + 1);
                 const rs = fs.createReadStream(filePath);
-                res.setHeader('Content-Disposition', 'attachment; filename=' + name);
-                res.setHeader('Content-Type', 'application/force-download');
+                res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent(name));
+                res.setHeader('Content-Type', 'application/octet-stream');
                 rs.pipe(res);
             }
             if (req.url === '/recPage') {
@@ -75,23 +75,22 @@ export default {
             }
             if (req.url === '/rec') {
                 // 处理Content-Type为multipart/form-data的请求
-                const bb = busboy({ headers: req.headers });
-                let saveTo = '';
+                const bb = busboy({ headers: req.headers, defParamCharset: 'utf-8', defCharset: 'utf-8' });
                 let successTip = ''
                 bb.on('file', (name, file, info) => {
                     // 只传文本的时候，还是会走到这里，但是info.filename为undefined
                     // 所以需要判断一下info.filename是否存在
                     if (info.filename) {
-                        saveTo = path.join(getDownloadDir(), info.filename)
+                        let saveTo = path.join(getDownloadDir(), info.filename)
                         file.pipe(fs.createWriteStream(saveTo))
-                        successTip = `上传成功，文件保存到：${saveTo}`
+                        successTip += `上传成功，文件保存到：${saveTo}<br>`
                     }
                 });
                 bb.on('field', (name, val, info) => {
                     // 处理文本字段
                     if (val) {
-                        BrowserWindow.getFocusedWindow().webContents.send('form-msg-updated', val)
-                        successTip = '消息发送成功'
+                        BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', val)
+                        successTip += '消息发送成功<br>'
                         bb.emit('close');
                     }
                 });
