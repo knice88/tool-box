@@ -9,6 +9,7 @@ import WsClient from '@/views/WsClient.vue'
 import QRCode from '@/views/QRCode.vue'
 import Aes from '@/views/Aes.vue'
 import FileTransfer from '@/views/FileTransfer.vue'
+import Hex from '@/views/Hex.vue'
 
 const routes = [
     {
@@ -21,6 +22,7 @@ const routes = [
             { path: '/time', component: Time },
             { path: '/qrcode', component: QRCode },
             { path: '/fileTransfer', component: FileTransfer },
+            { path: '/hex', component: Hex },
         ]
     },
 ]

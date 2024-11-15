@@ -35,6 +35,10 @@ const list = [
     {
         "route": "/fileTransfer",
         "title": "传输文件"
+    },
+    {
+        "route": "/hex",
+        "title": "十六进制"
     }
 ]
 const searchWords = ref('')
