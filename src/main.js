@@ -1,10 +1,9 @@
 const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
 const path = require('node:path');
-import httpServer from './composables/httpServer';
-import httpClient from './composables/httpClient';
-import { selectFolder } from './composables/dialog';
-import Store from 'electron-store';
-const store = new Store();
+import httpServer from './main/httpServer';
+import httpClient from './main/httpClient';
+import { selectFolder } from './main/dialog';
+import store from './main/store';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -54,12 +53,8 @@ app.whenReady().then(() => {
   ipcMain.handle('create-downlink', httpServer.createDownLink) // 创建下载链接
   ipcMain.handle('get-server-info', httpServer.getServerInfo) // 获取服务器信息
   ipcMain.handle('select-folder', selectFolder) // 选择文件夹
-  ipcMain.handle('get-setting', (event, key) => {
-    return store.get(key);
-  }); // 获取设置
-  ipcMain.handle('set-setting', (event, key, value) => {
-    store.set(key, value);
-  }); // 更新设置
+  ipcMain.handle('get-setting', store.getSetting); // 获取设置
+  ipcMain.handle('set-setting', store.setSetting); // 更新设置
   createWindow();
 
   // On OS X it's common to re-create a window in the app when the

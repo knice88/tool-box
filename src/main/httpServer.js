@@ -1,13 +1,12 @@
 import path from 'path';
-import { getRandStr, getRandNum } from './common'
-import { DOWNLOAD_DIR_KEY } from './constant'
+import { getRandStr, getRandNum } from '../composables/common'
+import { DOWNLOAD_DIR_KEY } from '../composables/constant'
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const busboy = require('busboy');
 const { BrowserWindow } = require('electron')
-import Store from 'electron-store';
-const store = new Store();
+import store from './store';
 
 let port
 let server
