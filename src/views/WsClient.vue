@@ -134,8 +134,8 @@ const copyConnection = (url) => {
                 <Close />
             </el-icon></el-button>
     </div>
-    <el-collapse v-model="recentCollapse">
-        <el-collapse-item title="最近请求" name="1" v-if="wsHistoryStore.dataList.length > 0">
+    <el-collapse v-model="recentCollapse" v-if="wsHistoryStore.dataList.length > 0">
+        <el-collapse-item title="最近请求" name="1">
             <div style="max-height: 250px; overflow: auto;">
                 <el-row :gutter="20" class="recent-item" v-for="item, index in recentHistoryList" :key="index">
                     <el-col :span="17">

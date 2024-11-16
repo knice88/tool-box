@@ -222,8 +222,8 @@ const dataText = computed(() => {
             <Promotion />
         </el-icon></el-button>
     <br />
-    <el-collapse v-model="recentCollapse">
-        <el-collapse-item title="最近请求" name="1" v-if="httpHistoryStore.dataList.length > 0">
+    <el-collapse v-model="recentCollapse" v-if="httpHistoryStore.dataList.length > 0">
+        <el-collapse-item title="最近请求" name="1">
             <div style="max-height: 250px; overflow: auto;">
                 <el-row :gutter="20" class="recent-title">
                     <el-col :span="2">
