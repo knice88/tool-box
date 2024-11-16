@@ -39,6 +39,10 @@ const list = [
     {
         "route": "/hex",
         "title": "十六进制"
+    },
+    {
+        "route": "/base64",
+        "title": "Base64"
     }
 ]
 const searchWords = ref('')

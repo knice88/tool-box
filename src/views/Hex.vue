@@ -103,20 +103,6 @@ watch(() => textToHex.value.t, (newVal) => {
     </el-input>
 
     <h3>文本</h3>
-    <!-- 十六进制转文本 -->
-    <el-text class="mx-1">十六进制转文本</el-text>
-    <el-input v-model="hexToText.h" placeholder="请输入十六进制编码" type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
-        <template #append>
-            <el-button :icon="CopyDocument" @click="copyToClipboard(hexToText.h)" />
-        </template>
-    </el-input>
-    <br>
-    <br>
-    <el-input v-model="hexToText.t" readonly type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
-        <template #append>
-            <el-button :icon="CopyDocument" @click="copyToClipboard(hexToText.t)" />
-        </template>
-    </el-input>
     <!-- 文本转十六进制 -->
     <el-text class="mx-1">文本转十六进制</el-text>
     <el-input v-model="textToHex.t" placeholder="文本内容" type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
@@ -129,6 +115,20 @@ watch(() => textToHex.value.t, (newVal) => {
     <el-input v-model="textToHex.h" readonly type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
         <template #append>
             <el-button :icon="CopyDocument" @click="copyToClipboard(textToHex.h)" />
+        </template>
+    </el-input>
+    <!-- 十六进制转文本 -->
+    <el-text class="mx-1">十六进制转文本</el-text>
+    <el-input v-model="hexToText.h" placeholder="请输入十六进制编码" type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
+        <template #append>
+            <el-button :icon="CopyDocument" @click="copyToClipboard(hexToText.h)" />
+        </template>
+    </el-input>
+    <br>
+    <br>
+    <el-input v-model="hexToText.t" readonly type="textarea" :autosize="{ minRows: 5, maxRows: 15 }">
+        <template #append>
+            <el-button :icon="CopyDocument" @click="copyToClipboard(hexToText.t)" />
         </template>
     </el-input>
 </template>

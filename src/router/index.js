@@ -10,6 +10,7 @@ import QRCode from '@/views/QRCode.vue'
 import Aes from '@/views/Aes.vue'
 import FileTransfer from '@/views/FileTransfer.vue'
 import Hex from '@/views/Hex.vue'
+import Base64 from '@/views/Base64.vue'
 
 const routes = [
     {
@@ -23,6 +24,7 @@ const routes = [
             { path: '/qrcode', component: QRCode },
             { path: '/fileTransfer', component: FileTransfer },
             { path: '/hex', component: Hex },
+            { path: '/base64', component: Base64 },
         ]
     },
 ]
