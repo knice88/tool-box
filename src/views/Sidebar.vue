@@ -43,6 +43,10 @@ const list = [
     {
         "route": "/base64",
         "title": "Base64"
+    },
+    {
+        "route": "/guid",
+        "title": "GUID 生成器"
     }
 ]
 const searchWords = ref('')

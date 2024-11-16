@@ -11,6 +11,7 @@ import Aes from '@/views/Aes.vue'
 import FileTransfer from '@/views/FileTransfer.vue'
 import Hex from '@/views/Hex.vue'
 import Base64 from '@/views/Base64.vue'
+import Guid from '@/views/Guid.vue'
 
 const routes = [
     {
@@ -25,6 +26,7 @@ const routes = [
             { path: '/fileTransfer', component: FileTransfer },
             { path: '/hex', component: Hex },
             { path: '/base64', component: Base64 },
+            { path: '/guid', component: Guid },
         ]
     },
 ]
