@@ -40,7 +40,7 @@ window.electronAPI.onFormMsgUpdated((msg) => {
 })
 const fileChange = () => {
     const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.input.files[0])
-    const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+    const fileName = filePath.split(/[/\\]/).pop()
     window.electronAPI.createDownLink(filePath).then(key => {
         const link = `http://${serverInfo.value.ip}:${serverInfo.value.port}/send/${key}`
         QRCode.toDataURL(link).then(imgUrl => {
@@ -85,11 +85,11 @@ const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
         <div style="display: flex; flex-wrap: wrap; gap: 10px;" v-if="downloadFiles.length > 0">
             <el-card style="max-width: 320px; width: 100%;" v-for="item, index in reserveDownloadFiles" :key="index">
                 <template #header>
-                    {{ item.link }}
+                    <div style="word-wrap: break-word;">{{ item.link }}</div>
                 </template>
                 <img :src="item.imgUrl" style="width: 100%" />
                 <template #footer>
-                    <div style="color: gray; font-size: 15px;">{{ item.time }}&nbsp;&nbsp;&nbsp;{{ item.fileName }}
+                    <div style="color: gray; font-size: 15px;line-height: 20px;">{{ item.time }}<br>{{ item.fileName }}
                     </div>
                 </template>
             </el-card>

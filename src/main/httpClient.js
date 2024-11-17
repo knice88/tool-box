@@ -15,7 +15,7 @@ export default {
                     // 遍历文件路径列表，将文件参数放入formData
                     value.paths.forEach(filePath => {
                         // 读取文件内容
-                        const file = new File([fs.readFileSync(filePath)], filePath.split('/').pop())
+                        const file = new File([fs.readFileSync(filePath)], filePath.split(/[/\\]/).pop())
                         formData.append(key, file)
                     });
                 } else {

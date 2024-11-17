@@ -38,7 +38,7 @@ export default {
                     res.end('Not Found\n');
                     return
                 }
-                const name = filePath.substring(filePath.lastIndexOf('/') + 1);
+                const name = filePath.split(/[/\\]/).pop();
                 const rs = fs.createReadStream(filePath);
                 res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent(name));
                 res.setHeader('Content-Type', 'application/octet-stream');
