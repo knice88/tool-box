@@ -4,6 +4,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: './favicon.png'
   },
   rebuildConfig: {},
   makers: [
@@ -14,6 +15,16 @@ module.exports = {
           maintainer: 'knice88',
           email: 'knice9608@gmail.com',
           icon: './favicon.png'
+        }
+      },
+    },
+    {
+      name: "@electron-forge/maker-squirrel",
+      config: {
+        setupIcon: "./favicon.ico",
+        options: {
+          maintainer: 'knice88',
+          email: 'knice9608@gmail.com',
         }
       },
     },
