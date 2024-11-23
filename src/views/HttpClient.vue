@@ -283,12 +283,12 @@ const dataText = computed(() => {
             <div>
                 <el-table :data="reqHeaders" style="width: 100%" max-height="250">
                     <el-table-column fixed prop="key" label="Key" width="400">
-                        <template v-slot="scope">
+                        <template #default="scope">
                             <el-input v-model="scope.row.key" placeholder="请输入key"></el-input>
                         </template>
                     </el-table-column>
                     <el-table-column prop="value" label="Value" width="600">
-                        <template v-slot="scope">
+                        <template #default="scope">
                             <el-input v-model="scope.row.value" placeholder="请输入value"></el-input>
                         </template>
                     </el-table-column>
@@ -318,12 +318,12 @@ const dataText = computed(() => {
             <div v-if="!bodyIsText">
                 <el-table :data="reqForm" style="width: 100%" max-height="250">
                     <el-table-column fixed prop="key" label="Key" width="400">
-                        <template v-slot="scope">
+                        <template #default="scope">
                             <el-input v-model="scope.row.key" placeholder="请输入key" />
                         </template>
                     </el-table-column>
                     <el-table-column prop="value" label="Value" width="600">
-                        <template v-slot="scope">
+                        <template #default="scope">
                             <el-input v-model="scope.row.value" placeholder="请输入value" :disabled="scope.row.isFile" />
                         </template>
                     </el-table-column>
