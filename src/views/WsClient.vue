@@ -221,6 +221,7 @@ const copyConnection = (url) => {
 }
 
 .row-info {
+    width: 210px;
     position: absolute;
     padding: 5px;
     bottom: -35px;
@@ -228,6 +229,7 @@ const copyConnection = (url) => {
 }
 
 .row-info-right {
+    width: 210px;
     position: absolute;
     padding: 5px;
     bottom: -35px;
@@ -247,12 +249,11 @@ const copyConnection = (url) => {
     /* height: 50px; */
     padding: 10px;
     line-height: 20px;
-    text-align: center;
     position: relative;
     border-radius: 5px;
     border: 1px solid rgb(196, 192, 192);
     margin-left: 20px;
-    min-width: 150px;
+    /* min-width: 150px; */
     max-width: 80%;
     margin-bottom: 35px;
 }
@@ -326,12 +327,11 @@ const copyConnection = (url) => {
     /* height: 50px; */
     padding: 10px;
     line-height: 20px;
-    text-align: center;
     position: relative;
     border-radius: 5px;
     background: rgb(108, 219, 4);
     margin-right: 20px;
-    min-width: 150px;
+    /* min-width: 150px; */
     max-width: 80%;
     margin-bottom: 35px;
 }
