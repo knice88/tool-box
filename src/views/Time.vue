@@ -38,6 +38,11 @@ const switchTitle = ref('日期转时间戳') // 转换按钮标题
 const onSwitch = () => {
     switchBtn.value = !switchBtn.value
     switchTitle.value = switchBtn.value ? '时间戳转日期' : '日期转时间戳'
+    if (switchBtn.value) {
+        inputTime.value = dateToTime.value
+    } else {
+        inputDate.value = timeToDate.value
+    }
 }
 // 每次修改时间单位时，重新计算当前时间戳
 watch(unit, (newVal) => {
@@ -49,6 +54,8 @@ watch(unit, (newVal) => {
     } else {
         // 换成毫秒单位，乘以1000
         inputTime.value = inputTime.value * 1000
+        // 补上3位小数，不然秒格式的日期用毫秒格式会显示空白
+        inputDate.value += '.000'
     }
 })
 const flushCurrentTime = () => {
