@@ -56,6 +56,7 @@ const displayMenus = computed(() => {
     return list.filter(item => item.title.toLowerCase().includes(searchWords.value.toLowerCase()))
 })
 const searchEle = useTemplateRef('search')
+const activedRoute = ref('') // 记录当前打开的路由
 onMounted(() => {
     // 打开页面时，搜索框自动获得焦点
     searchEle.value.focus()
@@ -63,6 +64,7 @@ onMounted(() => {
     window.electronAPI.getSetting(LAST_OPEN).then(lastOpenRoute => {
         if (lastOpenRoute) {
             router.push(lastOpenRoute)
+            activedRoute.value = lastOpenRoute
         }
     })
 })
@@ -70,17 +72,20 @@ const openFirstMenu = () => {
     if (displayMenus.value.length > 0) {
         const firstMenu = displayMenus.value[0].route
         router.push(firstMenu)
+        window.electronAPI.setSetting(LAST_OPEN, firstMenu)
+        activedRoute.value = firstMenu
     }
 }
 const cliMenuItem = (item) => {
     window.electronAPI.setSetting(LAST_OPEN, item.index)
+    activedRoute.value = item.index
 }
 </script>
 <template>
     <el-menu class="el-menu-vertical" router>
         <el-input placeholder="搜索菜单" style="width: 90%;margin-right: 5px;margin-bottom: 10px;" :suffix-icon="Search"
             clearable v-model="searchWords" ref="search" @keyup.enter="openFirstMenu" />
-        <el-menu-item v-for="item in displayMenus" :key="item.route" :index="item.route" :route="item.route"
+        <el-menu-item v-for="item in displayMenus" :key="item.route" :index="item.route" :route="item.route" :class="{'is-active': activedRoute === item.route}"
             @click="cliMenuItem">
             {{ item.title }}
         </el-menu-item>
