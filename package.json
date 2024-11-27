@@ -1,7 +1,7 @@
 {
   "name": "tool-box",
   "productName": "tool-box",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Common Tools Collection",
   "main": ".vite/build/main.js",
   "scripts": {
