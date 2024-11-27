@@ -120,6 +120,6 @@ const handleDrop = (event) => {
         </el-card>
         <br>
         <el-button type="primary" @click="copyToClipboard(formMsg)" :disabled="!formMsg">复制消息</el-button>
-        <el-input type="textarea" readonly v-model="formMsg"></el-input>
+        <el-input type="textarea" readonly v-model="formMsg" :autosize="{ minRows: 10, maxRows: 20 }" style="margin-top: 10px;"></el-input>
     </div>
 </template>

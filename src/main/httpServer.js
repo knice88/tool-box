@@ -56,17 +56,29 @@ export default {
                         </head>
                         <body>
                             <form action="/rec" method="post" enctype="multipart/form-data">
-                                <label for="file">选择文件</label>
-                                <input type="file" name="file">
-                                <br>
-                                <br>
-                                <br>
-                                <label for="textMsg">输入文本</label>
-                                <input type="text" name="textMsg">
+                                <input id="fileInput" type="file" name="file" multiple style="display: none">
+                                <div id="fileInputBtn" style="border: 2px dashed #ccc; padding: 100px; text-align: center; cursor: pointer;">点击选择文件</div>
+                                <textarea name="textMsg" style="display: block; margin: 10px 0; width: 100%; height: 200px; border: 2px dashed #ccc;" placeholder="输入文本"></textarea>
                                 <br>
                                 <input type="submit" value="发送">
                             </form>
                         </body>
+                        <script>
+                        const fileInput = document.getElementById('fileInput');
+                        const fileInputBtn = document.getElementById('fileInputBtn');
+                        fileInputBtn.addEventListener('click', (event) => {
+                            fileInput.click();
+                        });
+                        fileInput.addEventListener('change', (event) => {
+                            const files = Array.from(fileInput.files); // 获取选中的文件
+                            if (files.length > 0) {
+                                const fileNames = files.map(file => file.name).join(', '); // 获取文件名
+                                fileInputBtn.textContent = fileNames; // 更新按钮文本
+                            } else {
+                                fileInputBtn.textContent = '点击选择文件'; // 如果没有选择文件，重置文本
+                            }
+                        });
+                        </script>
                     </html>
                 `
                 res.setHeader('Content-Type', 'text/html');
