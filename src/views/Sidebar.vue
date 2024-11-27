@@ -2,6 +2,8 @@
 import { Search } from '@element-plus/icons-vue'
 import { ref, computed, useTemplateRef, onMounted } from 'vue';
 import { useRouter } from 'vue-router'
+import { LAST_OPEN } from '@/composables/constant'
+
 const router = useRouter()
 const list = [
     {
@@ -57,6 +59,12 @@ const searchEle = useTemplateRef('search')
 onMounted(() => {
     // 打开页面时，搜索框自动获得焦点
     searchEle.value.focus()
+    // 打开页面时，自动跳转到上次打开的页面
+    window.electronAPI.getSetting(LAST_OPEN).then(lastOpenRoute => {
+        if (lastOpenRoute) {
+            router.push(lastOpenRoute)
+        }
+    })
 })
 const openFirstMenu = () => {
     if (displayMenus.value.length > 0) {
@@ -64,13 +72,17 @@ const openFirstMenu = () => {
         router.push(firstMenu)
     }
 }
+const cliMenuItem = (item) => {
+    window.electronAPI.setSetting(LAST_OPEN, item.index)
+}
 </script>
 <template>
     <el-menu class="el-menu-vertical" router>
-        <el-input placeholder="搜索菜单" style="width: 90%;margin-right: 5px;margin-bottom: 10px;" :suffix-icon="Search" clearable
-            v-model="searchWords" ref="search" @keyup.enter="openFirstMenu" />
-        <el-menu-item v-for="item in displayMenus" :key="item.route" :index="item.route" :route="item.route"> {{
-            item.title }}
+        <el-input placeholder="搜索菜单" style="width: 90%;margin-right: 5px;margin-bottom: 10px;" :suffix-icon="Search"
+            clearable v-model="searchWords" ref="search" @keyup.enter="openFirstMenu" />
+        <el-menu-item v-for="item in displayMenus" :key="item.route" :index="item.route" :route="item.route"
+            @click="cliMenuItem">
+            {{ item.title }}
         </el-menu-item>
     </el-menu>
 </template>

@@ -39,7 +39,7 @@ window.electronAPI.onFormMsgUpdated((msg) => {
     formMsg.value = msg
 })
 const fileChange = () => {
-    const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.input.files[0])
+    const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.files[0])
     const fileName = filePath.split(/[/\\]/).pop()
     window.electronAPI.createDownLink(filePath).then(key => {
         const link = `http://${serverInfo.value.ip}:${serverInfo.value.port}/send/${key}`
@@ -55,7 +55,6 @@ const fileChange = () => {
         ElMessage.error('链接生成失败:' + err.message)
     })
 }
-const fileModel = ref('') // 在输入框为file类型时，v-model绑定的值为假的文件路径，没什么用
 const recInfo = ref({
     url: '', // 链接地址
     imgUrl: '' // 二维码图片地址
@@ -69,6 +68,13 @@ watch(serverInfo, (newVal) => {
     }
 }, { deep: true })
 const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
+const handleDrop = (event) => {
+    const files = event.dataTransfer.files;
+    if (files.length) {
+        fileRef.value.files = files;
+        fileChange();
+    }
+};
 </script>
 
 <template>
@@ -80,8 +86,11 @@ const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
         </el-radio-group>
     </div>
     <div v-if="transferMode === '0'">
-        <el-input placeholder="请输入要发送的文件路径" type="file" v-model="fileModel" ref="file-input" @input="fileChange"
-            style="margin-top: 10px;"></el-input>
+        <div @dragover.prevent @drop.prevent="handleDrop" @click="fileRef.click()"
+            style="border: 2px dashed #ccc; padding: 100px; text-align: center; cursor: pointer;">
+            将文件拖到这里，或点击选择文件
+            <input type="file" ref="file-input" :onchange="fileChange" style="display:none;" />
+        </div>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;" v-if="downloadFiles.length > 0">
             <el-card style="max-width: 320px; width: 100%;" v-for="item, index in reserveDownloadFiles" :key="index">
                 <template #header>
@@ -96,8 +105,10 @@ const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
         </div>
     </div>
     <div v-if="transferMode === '1'">
+        <div style="padding: 20px">
+            <el-text class="mx-1">扫描二维码可打开链接: {{ recInfo.url }}</el-text>
+        </div>
         <el-card style="max-width: 320px; width: 100%;">
-            <template #header>扫描二维码上传文件/传输文本</template>
             <img :src="recInfo.imgUrl" style="width: 100%" />
             <template #footer>
                 <div style="color: gray; font-size: 15px;">文件将保存到

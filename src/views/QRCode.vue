@@ -35,9 +35,9 @@ const reserveQrcodeImgList = computed(() => {
     return qrcodeImgList.value.slice().reverse()
 })
 const fileChange = async () => {
-    const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.input.files[0])
+    const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.files[0])
     const fileName = filePath.split(/[/\\]/).pop()
-    const base64 = await imageToBase64(fileRef.value.input.files[0]);
+    const base64 = await imageToBase64(fileRef.value.files[0]);
     const img = new Image();
     img.src = base64
     img.onload = async () => {
@@ -45,7 +45,7 @@ const fileChange = async () => {
         qrcodeImgList.value.push({
             imgUrl: base64,
             time: dayjs().format(DAY_FORMAT_SEC),
-            text: code ? code : '二维码解析失败',
+            text: code,
             fileName: fileName
         })
     };
@@ -75,6 +75,13 @@ const decodeQRCode = async (imageElement) => {
         return null;
     }
 }
+const handleDrop = (event) => {
+    const files = event.dataTransfer.files;
+    if (files.length) {
+        fileRef.value.files = files;
+        fileChange();
+    }
+};
 </script>
 <template>
     <div>
@@ -98,13 +105,17 @@ const decodeQRCode = async (imageElement) => {
         </div>
     </div>
     <div v-else>
-        <el-input type="file" ref="file-input" @input="fileChange" accept="image/*"></el-input>
+        <div @dragover.prevent @drop.prevent="handleDrop"  @click="fileRef.click()"
+            style="border: 2px dashed #ccc; padding: 100px; text-align: center; cursor: pointer;">
+            将二维码图片拖到这里，或点击选择图片
+            <input type="file" ref="file-input" :onchange="fileChange" style="display:none;" accept="image/*" />
+        </div>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;" v-if="qrcodeImgList.length > 0">
             <!-- imgUrl: 图片链接, time: 生成时间, text: 二维码内容, fileName: 文件名 -->
             <el-card style="max-width: 350px;" v-for="item, index in reserveQrcodeImgList" :key="index">
                 <template #header>
-                    <div style="word-wrap: break-word;">{{ item.text }}</div>
-                    <el-icon @click="copyToClipboard(item.text)" color="gray">
+                    <div style="word-wrap: break-word;">{{ item.text?item.text: '二维码解析失败' }}</div>
+                    <el-icon @click="copyToClipboard(item.text)" color="gray" v-if="item.text">
                         <DocumentCopy />
                     </el-icon>
                 </template>
