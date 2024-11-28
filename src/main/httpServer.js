@@ -40,6 +40,8 @@ export default {
                 }
                 const name = filePath.split(/[/\\]/).pop();
                 const rs = fs.createReadStream(filePath);
+                const stat = fs.statSync(filePath); // 获取文件状态
+                res.setHeader('Content-Length', stat.size); // 设置 Content-Length
                 res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent(name));
                 res.setHeader('Content-Type', 'application/octet-stream');
                 rs.pipe(res);
