@@ -35,9 +35,40 @@ const reserveDownloadFiles = computed(() => {
 })
 const fileRef = useTemplateRef('file-input') // 获取file输入框的引用
 const formMsg = ref('')
-window.electronAPI.onFormMsgUpdated((msg) => {
-    formMsg.value = msg
+let processList = ref([]) // 进度条对象，reqId=>进度条对象
+window.electronAPI.onFormMsgUpdated((obj) => {
+    // {"type": "text", "msg": "文本消息"}
+    if (obj.type === 'text') {
+        formMsg.value = obj.msg
+    }
+    if (obj.type === 'process') {
+        // 进度条
+        let index = processList.value.findIndex(item => item.reqId === obj.reqId)
+        if (index === -1) {
+            // 不存在则新增
+            processList.value.push({
+                reqId: obj.reqId,
+                obj: obj,
+            })
+        } else {
+            // 存在则更新
+            processList.value[index].obj = obj
+        }
+        console.log(processList.value)
+    }
 })
+
+function showSize(sizeByte) {
+    if (sizeByte < 1024) {
+        return sizeByte + 'B';
+    } else if (sizeByte < 1024 * 1024) {
+        return (sizeByte / 1024).toFixed(2) + 'KB';
+    } else if (sizeByte < 1024 * 1024 * 1024) {
+        return (sizeByte / 1024 / 1024).toFixed(2) + 'MB';
+    }
+    return (sizeByte / 1024 / 1024 / 1024).toFixed(2) + 'GB';
+}
+
 const fileChange = () => {
     const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.files[0])
     const fileName = filePath.split(/[/\\]/).pop()
@@ -75,6 +106,7 @@ const handleDrop = (event) => {
         fileChange();
     }
 };
+const format = (percentage) => (percentage === 100 ? 'completed' : `${percentage}%`)
 </script>
 
 <template>
@@ -118,8 +150,20 @@ const handleDrop = (event) => {
                 </div>
             </template>
         </el-card>
+        <!-- 进度条 -->
+        <br>
+        <br>
+        <div v-for="item in processList" :key="item.reqId">
+            <el-progress :percentage="Math.ceil(item.obj.progress)" :format="format" />
+            <el-text>文件总大小: {{ showSize(item.obj.totalSize) }}</el-text>
+            <el-text>&nbsp;&nbsp;平均速度: {{ showSize(item.obj.speed) }}/s</el-text>
+            <el-text v-if="item.obj.progress < 100">&nbsp;&nbsp;预计剩余时间: {{ item.obj.remainTime.toFixed(2) }}s</el-text>
+            <br>
+            <br>
+        </div>
         <br>
         <el-button type="primary" @click="copyToClipboard(formMsg)" :disabled="!formMsg">复制消息</el-button>
-        <el-input type="textarea" readonly v-model="formMsg" :autosize="{ minRows: 10, maxRows: 20 }" style="margin-top: 10px;"></el-input>
+        <el-input type="textarea" readonly v-model="formMsg" :autosize="{ minRows: 10, maxRows: 20 }"
+            style="margin-top: 10px;"></el-input>
     </div>
 </template>

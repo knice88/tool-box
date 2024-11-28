@@ -124,6 +124,37 @@ export default {
             }
             if (req.url === '/rec') {
                 // 处理Content-Type为multipart/form-data的请求
+                const totalSize = req.headers['content-length'] || 0 // 获取请求体大小，大致等于文件总大小
+                const startTime = Date.now() // 记录开始时间
+                // 随机生成一个reqId，用于标识本次请求
+                const reqId = getRandStr(8)
+                let receivedSize = 0 // 已接收大小，不包含正在传输的文件大小
+                let receivingIndex = 0 // 正在接收的文件index
+                let filePaths = [] // 保存上传的文件路径，最新的文件在数组的最后
+                let interval = setInterval(() => {
+                    if (filePaths.length === 0) {
+                        // 没有接收文件，不更新进度条
+                        return
+                    }
+                    for (; receivingIndex < filePaths.length - 1; receivingIndex++) {
+                        const filePath = filePaths[receivingIndex]
+                        const stat = fs.statSync(filePath)
+                        receivedSize += stat.size
+                    }
+                    const filePath = filePaths[receivingIndex]
+                    const stat = fs.statSync(filePath)
+                    const processingSize = stat.size + receivedSize // 当前正在传输的文件大小+已经接收的文件大小，得到总接收大小
+                    if (processingSize >= totalSize) {
+                        // 请求头里的content-length可能比实际接收到的文件大一点点，所以基本不会进这里，而是在close事件里处理
+                        clearInterval(interval)
+                        BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', { type: 'process', totalSize, progress: 100, reqId, speed: totalSize / ((Date.now() - startTime) / 1000) })
+                        return
+                    }
+                    const progress = processingSize * 100 / totalSize
+                    const costTime = (Date.now() - startTime) / 1000 // 计算耗时
+                    const speed = (processingSize / costTime).toFixed(2) // 计算速度
+                    BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', { type: 'process', totalSize, progress, speed, reqId, remainTime: (totalSize - processingSize) / speed })
+                }, 1000)
                 const bb = busboy({ headers: req.headers, defParamCharset: 'utf-8', defCharset: 'utf-8' });
                 let successTip = ''
                 const downloadDir = getDownloadDir()
@@ -135,6 +166,7 @@ export default {
                         const lastModified = info.filename.substring(0, info.filename.indexOf('_'))
                         const fileName = info.filename.substring(info.filename.indexOf('_') + 1)
                         let fullPath = path.join(downloadDir, fileName)
+                        filePaths.push(fullPath)
                         // 创建可写流并保存文件
                         const writeStream = fs.createWriteStream(fullPath);
                         file.pipe(writeStream)
@@ -146,22 +178,25 @@ export default {
                             fs.utimes(fullPath, parsedTime, parsedTime, (err) => {
                                 if (err) {
                                     console.error(`设置文件时间失败: ${err} ${parsedTime}`);
-                                } else {
-                                    console.log(`设置文件 ${fullPath} 的时间成功`);
                                 }
                             });
                         });
-                        successTip += `上传成功，文件保存到：${downloadDir}\n`
                     }
                 });
                 bb.on('field', (name, val, info) => {
                     // 处理文本字段
                     if (val) {
-                        BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', val)
+                        BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', { 'type': 'text', 'msg': val })
                         successTip += '消息发送成功\n'
                     }
                 });
                 bb.on('close', () => {
+                    clearInterval(interval)
+                    if (filePaths.length > 0) {
+                        // 有接收文件，才更新进度条
+                        successTip += `上传成功，文件保存到：${downloadDir}\n`
+                        BrowserWindow.getAllWindows()[0].webContents.send('form-msg-updated', { type: 'process', totalSize, progress: 100, reqId, speed: totalSize / ((Date.now() - startTime) / 1000) })
+                    }
                     res.writeHead(200, { 'Connection': 'close' });
                     res.end(JSON.stringify({ success: true, message: successTip }));
                 });
