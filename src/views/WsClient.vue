@@ -174,15 +174,24 @@ const copyConnection = (url) => {
             </div>
         </div>
     </div>
-    <el-input v-model="msg" placeholder="请输入消息" class="data-input" @keyup.enter="sendMsg"
-        :disabled="!connected"></el-input>
-    <el-button type="primary" @click="sendMsg" :disabled="!msg || !connected">
+    <div class="input-area">
+        <el-input v-model="msg" placeholder="请输入消息" class="data-input" @keyup.enter="sendMsg"
+            :disabled="!connected"></el-input>
+        <el-button type="primary" @click="sendMsg" :disabled="!msg || !connected">
         发送<el-icon class="el-icon--right">
             <Promotion />
         </el-icon></el-button>
+    </div>
 </template>
 
 <style scoped>
+.input-area {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 300px;
+}
+
 .recent-item {
     width: 96%;
     font-size: 16px;
@@ -194,15 +203,19 @@ const copyConnection = (url) => {
 
 .header {
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
 }
 
 .ws-input {
     margin-right: 10px;
-    width: 80%;
+    width: 100%;
+    min-width: 300px;
 }
 
 .chat-area {
-    width: 96%;
+    width: calc(100%-2px);
+    min-width: 300px;
     height: 600px;
     border: rgb(196, 192, 192) 1px solid;
     margin-bottom: 10px;
