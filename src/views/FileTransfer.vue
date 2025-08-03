@@ -10,11 +10,17 @@ onMounted(async () => {
     await window.electronAPI.startHttpServer()
     getServerInfo()
 })
+const selectedIp = ref('') // 选择的ip地址
 const getServerInfo = () => {
     window.electronAPI.getServerInfo().then(info => {
-        serverInfo.value.ip = info.ip
+        serverInfo.value.ips = info.ips
         serverInfo.value.port = info.port
         serverInfo.value.downloadDir = info.downloadDir
+        if (info.ips.length > 0) {
+            selectedIp.value = info.ips[0]; // 默认选择第一个IP
+        } else {
+            selectedIp.value = '';
+        }
     })
 }
 onUnmounted(() => {
@@ -70,34 +76,46 @@ function showSize(sizeByte) {
 }
 
 const fileChange = () => {
-    const filePath = window.electronAPI.webUtils.getPathForFile(fileRef.value.files[0])
-    const fileName = filePath.split(/[/\\]/).pop()
-    window.electronAPI.createDownLink(filePath).then(key => {
-        const link = `http://${serverInfo.value.ip}:${serverInfo.value.port}/send/${key}`
-        QRCode.toDataURL(link).then(imgUrl => {
-            downloadFiles.value.push({
-                link: link,
-                fileName: fileName,
-                imgUrl: imgUrl,
-                time: dayjs().format(DAY_FORMAT_SEC),
+    for (let index = 0; index < fileRef.value.files.length; index++) {
+        const f = fileRef.value.files[index];
+        const filePath = window.electronAPI.webUtils.getPathForFile(f)
+        const fileName = filePath.split(/[/\\]/).pop()
+        window.electronAPI.createDownLink(filePath).then(key => {
+            const link = `http://${selectedIp.value}:${serverInfo.value.port}/send/${key}`
+            QRCode.toDataURL(link).then(imgUrl => {
+                downloadFiles.value.push({
+                    link: link,
+                    fileName: fileName,
+                    imgUrl: imgUrl,
+                    time: dayjs().format(DAY_FORMAT_SEC),
+                    key: key,
+                })
             })
+        }).catch(err => {
+            ElMessage.error('链接生成失败:' + err.message)
         })
-    }).catch(err => {
-        ElMessage.error('链接生成失败:' + err.message)
-    })
+    }
 }
 const recInfo = ref({
     url: '', // 链接地址
     imgUrl: '' // 二维码图片地址
 })
-watch(serverInfo, (newVal) => {
+watch(selectedIp, (newVal) => {
     if (newVal) {
-        recInfo.value.url = `http://${newVal.ip}:${newVal.port}/recPage`
+        recInfo.value.url = `http://${newVal}:${serverInfo.value.port}/recPage`
         QRCode.toDataURL(recInfo.value.url).then(imgUrl => {
             recInfo.value.imgUrl = imgUrl
         })
+        for (let index = 0; index < downloadFiles.value.length; index++) {
+            const newLink = `http://${newVal}:${serverInfo.value.port}/send/${downloadFiles.value[index].key}`
+            QRCode.toDataURL(newLink).then(imgUrl => {
+                downloadFiles.value[index].link = newLink
+                downloadFiles.value[index].imgUrl = imgUrl
+            })
+        }
+        console.log(downloadFiles.value)
     }
-}, { deep: true })
+})
 const transferMode = ref('0') // 发送/接收模式，0-发送，1-接收
 const handleDrop = (event) => {
     const files = event.dataTransfer.files;
@@ -115,6 +133,11 @@ const format = (percentage) => (percentage === 100 ? 'completed' : `${percentage
         <el-radio-group v-model="transferMode">
             <el-radio value="0">发送文件</el-radio>
             <el-radio value="1">接收文件</el-radio>
+        </el-radio-group>
+    </div>
+    <div class="mb-2 ml-4">
+        <el-radio-group v-model="selectedIp">
+            <el-radio v-for="value in serverInfo.ips" :value="value" size="large">{{ value }}</el-radio>
         </el-radio-group>
     </div>
     <div v-if="transferMode === '0'">

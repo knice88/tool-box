@@ -233,17 +233,17 @@ export default {
     },
     getServerInfo: (event) => {
         const ifaces = os.networkInterfaces();
-        let ip = '127.0.0.1'
+        let ips = []
         for (let dev in ifaces) {
             ifaces[dev].forEach(details => {
                 if (details.family === 'IPv4' && details.address !== '127.0.0.1') {
-                    ip = details.address
+                    ips.push(details.address);
                 }
             });
         }
         return {
             port: port,
-            ip: ip,
+            ips: ips,
             downloadDir: getDownloadDir()
         }
     }
